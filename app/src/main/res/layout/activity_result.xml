@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ResultActivity">
+
+    <!-- ImageView para mostrar la imagen procesada -->
+    <ImageView
+        android:id="@+id/imgResult"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintDimensionRatio="H,16:9"
+        android:layout_margin="16dp" />
+
+    <!-- EditText para temperatura máxima -->
+    <EditText
+        android:id="@+id/etMaxTemp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Temperatura máxima"
+        app:layout_constraintTop_toBottomOf="@id/imgResult"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="16dp" />
+
+    <!-- EditText para temperatura mínima -->
+    <EditText
+        android:id="@+id/etMinTemp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Temperatura mínima"
+        app:layout_constraintTop_toBottomOf="@id/etMaxTemp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="16dp" />
+
+    <!-- Botón para confirmar -->
+    <Button
+        android:id="@+id/btnConfirm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Confirmar"
+        app:layout_constraintTop_toBottomOf="@id/etMinTemp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
