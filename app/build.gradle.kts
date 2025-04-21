@@ -22,17 +22,11 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
-        ndkVersion = "23.1.7779620"
+
 
 
     }
 
-    externalNativeBuild {
-        cmake {
-            path("src/main/cpp/CMakeLists.txt")
-            version = "4.0.1"
-        }
-    }
 
     buildTypes {
         release {
@@ -60,12 +54,10 @@ chaquopy {
         pip {
             // Ejemplo de dependencias. Ajusta a lo que requieras y verifica su compatibilidad en Android.
             install("opencv-python")
-            //install("tensorflow")          // Si usas tensorflow o tensorflow-lite, asegúrate de la compatibilidad.
-            //install("simpleitk")
             install("pytesseract")
-            //install("matplotlib")
+            install("matplotlib")
             install("pandas")
-                install("numpy")
+            install("numpy")
             // Puedes agregar más dependencias necesarias (por ejemplo, ultralytics o kagglehub),
             // pero ten en cuenta que podrían tener limitaciones en Android.
         }
@@ -90,4 +82,6 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.12.0")
     kapt("com.github.bumptech.glide:compiler:4.12.0")
     implementation("com.rmtheis:tess-two:9.1.0")
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1")
 }

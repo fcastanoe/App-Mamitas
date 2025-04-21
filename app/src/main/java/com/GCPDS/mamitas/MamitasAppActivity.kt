@@ -13,8 +13,6 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -27,6 +25,67 @@ import com.chaquo.python.android.AndroidPlatform
 import java.io.File
 import java.io.FileOutputStream
 import com.googlecode.tesseract.android.TessBaseAPI
+import android.app.ProgressDialog
+import android.graphics.Bitmap
+import android.widget.ProgressBar
+import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.flex.FlexDelegate
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+
+// 1) Convierte un Bitmap a escala de grises.
+//    Mantiene el mismo tamaño que el bitmap original.
+fun bitmapToGray(input: Bitmap): Bitmap {
+    val width = input.width
+    val height = input.height
+    val grayBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(grayBmp)
+    val paint = Paint()
+    val cm = android.graphics.ColorMatrix().apply {
+        setSaturation(0f)
+    }
+    paint.colorFilter = android.graphics.ColorMatrixColorFilter(cm)
+    canvas.drawBitmap(input, 0f, 0f, paint)
+    return grayBmp
+}
+
+// 2) Preprocesa el Bitmap en un array compatible con Interpreter.run()
+//    Crea un tensor [1, targetH, targetW, 3] de floats normalizados [0..1].
+fun preprocessBitmap(grayBmp: Bitmap, targetW: Int, targetH: Int): Array<Array<Array<FloatArray>>> {
+    // Redimensiona el grayscale a (targetW, targetH)
+    val resized = Bitmap.createScaledBitmap(grayBmp, targetW, targetH, true)
+    // Construye el array [1][H][W][3]
+    val input = Array(1) {
+        Array(targetH) { y ->
+            Array(targetW) { x ->
+                // Lee el pixel (gris) y convierte a float RGB igual
+                val c = resized.getPixel(x, y) and 0xFF
+                val v = c / 255f
+                FloatArray(3) { v }  // [v, v, v]
+            }
+        }
+    }
+    return input
+}
+
+// 3) Convierte la salida del modelo (Array[H][W][2]) a un Bitmap de máscara
+//    Asume que la última dimensión es el canal de clases;
+//    marca en blanco las celdas con probabilidad clase 1 > 0.5, negro el resto.
+fun outputToBitmap(output: Array<Array<FloatArray>>): Bitmap {
+    val height = output.size
+    val width = output[0].size
+    val mask = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            val probs = output[y][x]  // FloatArray de longitud 2
+            // Usa umbral 0.5 en el canal 1
+            val v = if (probs[1] > 0.5f) 255 else 0
+            mask.setPixel(x, y, Color.argb(255, v, v, v))
+        }
+    }
+    return mask
+}
 
 fun copyTessDataFiles(context: Context) {
     val assetManager = context.assets
@@ -98,6 +157,7 @@ class MamitasAppActivity : AppCompatActivity() {
     private lateinit var tvMinTemp: TextView
     private lateinit var btnModifyManual: Button
     private lateinit var btnStart: Button
+    private lateinit var progressBar: ProgressBar
 
     // Launcher para seleccionar imagen
     private val getContent = registerForActivityResult(GetContent()) { uri: Uri? ->
@@ -115,11 +175,6 @@ class MamitasAppActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_mamitas_app)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         // Vincular las vistas definidas en el layout
         btnSelectImage = findViewById(R.id.btnSelectImage)
@@ -129,14 +184,60 @@ class MamitasAppActivity : AppCompatActivity() {
         tvMessage         = findViewById(R.id.tvMessage)
         btnModifyManual    = findViewById(R.id.btnModifyManual)
         btnStart           = findViewById(R.id.btnStart)
+        progressBar = findViewById(R.id.progressBar)
 
         // Ocultamos todo al inicio
         listOf(tvMaxTemp, tvMinTemp, tvMessage, btnModifyManual, btnStart)
             .forEach { it.visibility = View.GONE }
 
-        // Listener para el botón Start (solo visual)
         btnStart.setOnClickListener {
-            Toast.makeText(this, "Valores confirmados.", Toast.LENGTH_SHORT).show()
+            // 1) Mostrar loader
+            progressBar.visibility = View.VISIBLE
+
+            Thread {
+                try {
+                    // a) Carga modelo con FlexDelegate si es necesario
+                    val file = File(filesDir, "models/ResUNet_efficientnetb3_Mamitas.tflite")
+                    val options = Interpreter.Options().addDelegate(FlexDelegate())
+                    val interpreter = Interpreter(file, options)
+
+                    // b) Preprocesado igual que en Python
+                    val bitmap = BitmapFactory.decodeFile(lastImagePath)
+                    val gray = bitmapToGray(bitmap)
+                    val input = preprocessBitmap(gray, 512, 512) // adaptar dims
+
+                    // c) Inferencia
+                    val output = Array(1) { Array(512) { Array(512) { FloatArray(2) } } }
+                    interpreter.run(input, output)
+
+                    // d) Postprocesado y guardado de máscara
+                    val maskBmp = outputToBitmap(output[0])
+                    val maskFile = File(filesDir, "mask.png")
+                    maskBmp.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(maskFile))
+
+                    // 2) Ahora llamamos a Python sólo para plotear
+                    val py = Python.getInstance()
+                    val plot = py.getModule("plot")
+                    val plotPath = plot.callAttr(
+                        "run_plot", lastImagePath, filesDir.absolutePath
+                    ).toString()
+
+                    runOnUiThread {
+                        // 2) Ocultar loader y abrir pantalla de plot
+                        progressBar.visibility = View.GONE
+                        // Abrir PlotActivity con rutas
+                        startActivity(Intent(this, PlotActivity::class.java).apply {
+                            putExtra("imagePath", lastImagePath)
+                            putExtra("plotPath", plotPath)
+                        })
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        progressBar.visibility = View.GONE
+                        Toast.makeText(this, "Error al segmentar: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }.start()
         }
 
         // Registrar launcher para recibir datos editados
@@ -172,6 +273,8 @@ class MamitasAppActivity : AppCompatActivity() {
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
+
+        copyTessDataFiles(this)
 
     }
 
@@ -224,6 +327,8 @@ class MamitasAppActivity : AppCompatActivity() {
         }
         copyTessDataFiles(this)
 
+        lastImagePath = imagePath
+
         try {
             val (maxStr, minStr) = performOCROnImage(imagePath)
             lastMaxTemp = maxStr
@@ -272,6 +377,7 @@ class MamitasAppActivity : AppCompatActivity() {
             e.printStackTrace()
             Toast.makeText(this, "Error en OCR: ${e.message}", Toast.LENGTH_LONG).show()
         }
+
     }
 
     private fun showResults(max: String, min: String) {
@@ -280,3 +386,5 @@ class MamitasAppActivity : AppCompatActivity() {
         listOf(tvMaxTemp, tvMinTemp).forEach { it.visibility = View.VISIBLE }
     }
 }
+
+
