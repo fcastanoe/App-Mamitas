@@ -1,22 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_plot"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".PlotActivity">
+    android:layout_height="match_parent">
 
+    <!-- 1) máscara sobre gris -->
     <ImageView
-        android:id="@+id/imgPlot"
-        android:layout_width="0dp"
+        android:id="@+id/imgSegOverlay"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:contentDescription="Segmentation Plot"
+        android:layout_weight="2"
         android:scaleType="fitCenter"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:contentDescription="Máscara sobre gris"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- 2) contornos dermatomas -->
+    <ImageView
+        android:id="@+id/imgDermContours"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:scaleType="fitCenter"
+        android:contentDescription="Contornos de dermatomas"/>
+
+    <!-- 3) lista desplazable de temperaturas -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:id="@+id/tempsContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </ScrollView>
+
+    <!-- 4) Botón para resetear y escoger otra -->
+    <Button
+        android:id="@+id/btnReset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nueva imagen"
+        android:layout_margin="16dp"/>
+</LinearLayout>

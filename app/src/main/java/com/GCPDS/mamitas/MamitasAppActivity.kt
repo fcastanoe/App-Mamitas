@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import com.bumptech.glide.Glide
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.chaquo.python.PyObject
 import java.io.File
 import java.io.FileOutputStream
 import com.googlecode.tesseract.android.TessBaseAPI
@@ -33,6 +34,8 @@ import org.tensorflow.lite.flex.FlexDelegate
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
+import android.widget.Toast.LENGTH_LONG
 
 // 1) Convierte un Bitmap a escala de grises.
 //    Mantiene el mismo tamaño que el bitmap original.
@@ -213,29 +216,41 @@ class MamitasAppActivity : AppCompatActivity() {
                     // d) Postprocesado y guardado de máscara
                     val maskBmp = outputToBitmap(output[0])
                     val maskFile = File(filesDir, "mask.png")
-                    maskBmp.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(maskFile))
+                    FileOutputStream(maskFile).use { out ->
+                        maskBmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                    // Verifica existencia y tamaño:
+                    if (!maskFile.exists() || maskFile.length() == 0L) {
+                        throw Exception("mask.png no se escribió o está vacío: ${maskFile.absolutePath}")
+                    }
 
-                    // 2) Ahora llamamos a Python sólo para plotear
+
+                    // 2) Llamamos a plot.run_plot que ahora devuelve 4 valores
                     val py = Python.getInstance()
-                    val plot = py.getModule("plot")
-                    val plotPath = plot.callAttr(
-                        "run_plot", lastImagePath, filesDir.absolutePath
-                    ).toString()
+                    val mod: PyObject = py.getModule("plot")
+                    val results = mod.callAttr(
+                        "run_plot",
+                        lastImagePath,
+                        filesDir.absolutePath,
+                        lastMaxTemp,
+                        lastMinTemp
+                    ).asList()  // [seg_png, seg_overlay, derm_contours, tempsJson]
+
+                    val segOverlayPath = results[1].toString()  // máscara sobre gris
+                    val dermContourPath= results[2].toString()  // contornos dermatomas
+                    val tempsJson      = results[3].toString()  // JSON de temperaturas
 
                     runOnUiThread {
-                        // 2) Ocultar loader y abrir pantalla de plot
                         progressBar.visibility = View.GONE
-                        // Abrir PlotActivity con rutas
                         startActivity(Intent(this, PlotActivity::class.java).apply {
-                            putExtra("imagePath", lastImagePath)
-                            putExtra("plotPath", plotPath)
+                            putExtra("segOverlayPath", segOverlayPath)    // ← pasamos las dos imágenes
+                            putExtra("dermContourPath", dermContourPath)
+                            putExtra("tempsJson", tempsJson)
                         })
                     }
-                } catch (e: Exception) {
-                    runOnUiThread {
-                        progressBar.visibility = View.GONE
-                        Toast.makeText(this, "Error al segmentar: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
+                } catch (e: com.chaquo.python.PyException) {
+                    Log.e("PythonError", e.message ?: "Error desconocido en run_plot")
+                    throw e  // o muestra Toast y aborta
                 }
             }.start()
         }

@@ -9,6 +9,7 @@ android {
     namespace = "com.GCPDS.mamitas"
     compileSdk = 35
 
+
     defaultConfig {
         applicationId = "com.GCPDS.mamitas"
         minSdk = 24
@@ -22,9 +23,6 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
-
-
-
     }
 
 
@@ -58,6 +56,7 @@ chaquopy {
             install("matplotlib")
             install("pandas")
             install("numpy")
+            install("scipy")
             // Puedes agregar más dependencias necesarias (por ejemplo, ultralytics o kagglehub),
             // pero ten en cuenta que podrían tener limitaciones en Android.
         }
