@@ -1,6 +1,5 @@
 package com.GCPDS.mamitas
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
@@ -10,15 +9,10 @@ import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import com.bumptech.glide.Glide
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
@@ -26,16 +20,17 @@ import com.chaquo.python.PyObject
 import java.io.File
 import java.io.FileOutputStream
 import com.googlecode.tesseract.android.TessBaseAPI
-import android.app.ProgressDialog
 import android.graphics.Bitmap
-import android.widget.ProgressBar
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.flex.FlexDelegate
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
-import android.widget.Toast.LENGTH_LONG
+import android.view.MenuItem
+import androidx.appcompat.app.ActionBarDrawerToggle
+import com.GCPDS.mamitas.databinding.ActivityMamitasAppBinding
+import com.google.android.material.navigation.NavigationView
 
 // 1) Convierte un Bitmap a escala de grises.
 //    Mantiene el mismo tamaño que el bitmap original.
@@ -153,136 +148,99 @@ private fun getDataColumn(
     return null
 }
 
-class MamitasAppActivity : AppCompatActivity() {
-    private lateinit var btnSelectImage: Button
-    private lateinit var imgSelected: ImageView
-    private lateinit var tvMaxTemp: TextView
-    private lateinit var tvMinTemp: TextView
-    private lateinit var btnModifyManual: Button
-    private lateinit var btnStart: Button
-    private lateinit var progressBar: ProgressBar
+
+
+class MamitasAppActivity: AppCompatActivity(),
+    NavigationView.OnNavigationItemSelectedListener {
+
+    private lateinit var binding: ActivityMamitasAppBinding
+    private lateinit var toggle: ActionBarDrawerToggle
 
     // Launcher para seleccionar imagen
-    private val getContent = registerForActivityResult(GetContent()) { uri: Uri? ->
+    private val getContent = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
         uri?.let {
-            Glide.with(this).load(uri).into(imgSelected)
-            processImage(uri)
+            Glide.with(this).load(it).into(binding.imgSelected)
+            processImage(it)
         }
     }
 
     private lateinit var manualLauncher: ActivityResultLauncher<Intent>
 
-    private lateinit var tvMessage: TextView  // <- nuevo
+    // Variables para retener los últimos valores
+    private var lastImagePath: String = ""
+    private var lastMaxTemp: String = ""
+    private var lastMinTemp: String = ""
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_mamitas_app)
+        // 1) Inflamos con ViewBinding y establecemos el layout
+        binding = ActivityMamitasAppBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Vincular las vistas definidas en el layout
-        btnSelectImage = findViewById(R.id.btnSelectImage)
-        imgSelected = findViewById(R.id.imgSelected)
-        tvMaxTemp         = findViewById(R.id.tvMaxTemp)
-        tvMinTemp         = findViewById(R.id.tvMinTemp)
-        tvMessage         = findViewById(R.id.tvMessage)
-        btnModifyManual    = findViewById(R.id.btnModifyManual)
-        btnStart           = findViewById(R.id.btnStart)
-        progressBar = findViewById(R.id.progressBar)
-
-        // Ocultamos todo al inicio
-        listOf(tvMaxTemp, tvMinTemp, tvMessage, btnModifyManual, btnStart)
-            .forEach { it.visibility = View.GONE }
-
-        btnStart.setOnClickListener {
-            // 1) Mostrar loader
-            progressBar.visibility = View.VISIBLE
-
-            Thread {
-                try {
-                    // a) Carga modelo con FlexDelegate si es necesario
-                    val file = File(filesDir, "models/ResUNet_efficientnetb3_Mamitas.tflite")
-                    val options = Interpreter.Options().addDelegate(FlexDelegate())
-                    val interpreter = Interpreter(file, options)
-
-                    // b) Preprocesado igual que en Python
-                    val bitmap = BitmapFactory.decodeFile(lastImagePath)
-                    val gray = bitmapToGray(bitmap)
-                    val input = preprocessBitmap(gray, 512, 512) // adaptar dims
-
-                    // c) Inferencia
-                    val output = Array(1) { Array(512) { Array(512) { FloatArray(2) } } }
-                    interpreter.run(input, output)
-
-                    // d) Postprocesado y guardado de máscara
-                    val maskBmp = outputToBitmap(output[0])
-                    val maskFile = File(filesDir, "mask.png")
-                    FileOutputStream(maskFile).use { out ->
-                        maskBmp.compress(Bitmap.CompressFormat.PNG, 100, out)
-                    }
-                    // Verifica existencia y tamaño:
-                    if (!maskFile.exists() || maskFile.length() == 0L) {
-                        throw Exception("mask.png no se escribió o está vacío: ${maskFile.absolutePath}")
-                    }
+        // 2) Toolbar + Drawer
+        setSupportActionBar(binding.toolbar)
+        toggle = ActionBarDrawerToggle(
+            this,
+            binding.drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        binding.drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+        binding.navView.setNavigationItemSelectedListener(this)
 
 
-                    // 2) Llamamos a plot.run_plot que ahora devuelve 4 valores
-                    val py = Python.getInstance()
-                    val mod: PyObject = py.getModule("plot")
-                    val results = mod.callAttr(
-                        "run_plot",
-                        lastImagePath,
-                        filesDir.absolutePath,
-                        lastMaxTemp,
-                        lastMinTemp
-                    ).asList()  // [seg_png, seg_overlay, derm_contours, tempsJson]
 
-                    val segOverlayPath = results[1].toString()  // máscara sobre gris
-                    val dermContourPath= results[2].toString()  // contornos dermatomas
-                    val tempsJson      = results[3].toString()  // JSON de temperaturas
+        // 3) Ocultamos al inicio las vistas secundarias
+        listOf(
+            binding.tvMaxTemp,
+            binding.tvMinTemp,
+            binding.tvMessage,
+            binding.btnModifyManual,
+            binding.btnStart,
+            binding.progressBar
+        ).forEach { it.visibility = View.GONE }
 
-                    runOnUiThread {
-                        progressBar.visibility = View.GONE
-                        startActivity(Intent(this, PlotActivity::class.java).apply {
-                            putExtra("segOverlayPath", segOverlayPath)    // ← pasamos las dos imágenes
-                            putExtra("dermContourPath", dermContourPath)
-                            putExtra("tempsJson", tempsJson)
-                        })
-                    }
-                } catch (e: com.chaquo.python.PyException) {
-                    Log.e("PythonError", e.message ?: "Error desconocido en run_plot")
-                    throw e  // o muestra Toast y aborta
-                }
-            }.start()
+        // 2) Usa el launcher en el listener del botón:
+        binding.btnSelectImage.setOnClickListener {
+            // Pasamos el MIME type "image/*" para filtrar solo imágenes
+            getContent.launch("image/*")
+        }
+
+        // 5) "Start" para ejecutar la inferencia
+        binding.btnStart.setOnClickListener {
+            runInference()
+        }
+
+        // 6) "Modificar manualmente" abre ResultActivity para editar
+        binding.btnModifyManual.setOnClickListener {
+            Intent(this, ResultActivity::class.java).also { intent ->
+                intent.putExtra("imagePath", lastImagePath)
+                intent.putExtra("max_temp", lastMaxTemp)
+                intent.putExtra("min_temp", lastMinTemp)
+                manualLauncher.launch(intent)
+            }
         }
 
         // Registrar launcher para recibir datos editados
         manualLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+            if (result.resultCode == RESULT_OK) {
                 result.data?.let { data ->
                     lastMaxTemp = data.getStringExtra("max_temp") ?: lastMaxTemp
                     lastMinTemp = data.getStringExtra("min_temp") ?: lastMinTemp
-                    tvMaxTemp.text = "Max: ${lastMaxTemp}°C"
-                    tvMinTemp.text = "Min: ${lastMinTemp}°C"
+                    binding.tvMaxTemp.text = "Max: ${lastMaxTemp}°C"
+                    binding.tvMinTemp.text = "Min: ${lastMinTemp}°C"
                 }
             }
         }
 
-
-        // Al presionar el botón se abre la galería para escoger una imagen
-        btnSelectImage.setOnClickListener {
-            getContent.launch("image/*")
-        }
-        btnModifyManual.setOnClickListener {
-            // Lanzamos ResultActivity esperando un resultado
-            Intent(this, ResultActivity::class.java).apply {
-                putExtra("imagePath", lastImagePath)
-                putExtra("max_temp", lastMaxTemp)
-                putExtra("min_temp", lastMinTemp)
-                manualLauncher.launch(this)
-            }
-        }
 
         // Inicializa Chaquopy si aún no se ha iniciado.
         if (!Python.isStarted()) {
@@ -293,10 +251,93 @@ class MamitasAppActivity : AppCompatActivity() {
 
     }
 
-    // Variables para retener los últimos valores
-    private var lastImagePath: String = ""
-    private var lastMaxTemp: String = ""
-    private var lastMinTemp: String = ""
+    /** Ejecuta la inferencia TensorFlow Lite en background */
+    private fun runInference() {
+        binding.progressBar.visibility = View.VISIBLE
+
+        Thread {
+            try {
+                // Cargo modelo
+                val modelFile = File(filesDir, "models/ResUNet_efficientnetb3_Mamitas.tflite")
+                val options = Interpreter.Options().addDelegate(FlexDelegate())
+                val interpreter = Interpreter(modelFile, options)
+
+                // Preparo bitmap
+                val bmp = BitmapFactory.decodeFile(lastImagePath)
+                val gray = bitmapToGray(bmp)
+                val input = preprocessBitmap(gray, 512, 512)
+
+                // Ejecuto
+                val output = Array(1) { Array(512) { Array(512) { FloatArray(2) } } }
+                interpreter.run(input, output)
+
+                // Post–process
+                val maskBmp = outputToBitmap(output[0])
+                File(filesDir, "mask.png").outputStream().use { out ->
+                    maskBmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+
+                // Llamada a Python para plots
+                val py = Python.getInstance()
+                val mod: PyObject = py.getModule("plot")
+                val results = mod.callAttr(
+                    "run_plot",
+                    lastImagePath,
+                    filesDir.absolutePath,
+                    lastMaxTemp,
+                    lastMinTemp
+                ).asList()
+
+                val segOverlay = results[1].toString()
+                val dermContours = results[2].toString()
+                val tempsJson = results[3].toString()
+
+                runOnUiThread {
+                    binding.progressBar.visibility = View.GONE
+                    startActivity(Intent(this, PlotActivity::class.java).apply {
+                        putExtra("segOverlayPath", segOverlay)
+                        putExtra("dermContourPath", dermContours)
+                        putExtra("tempsJson", tempsJson)
+                    })
+                }
+            } catch (e: Exception) {
+                Log.e("InferenceError", e.message ?: "Error en inferencia")
+                runOnUiThread {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(this, "Error en inferencia: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (toggle.onOptionsItemSelected(item)) return true
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_inicio       -> { // Lanzar MainActivity y cerrar la actual para evitar back-stack redundante
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+            R.id.nav_formulario   -> startActivity(Intent(this, FormularioActivity::class.java))
+            R.id.nav_imagenes     -> { /* Ya estás aquí */ }
+            R.id.nav_resultados   -> startActivity(Intent(this, ResultadosActivity::class.java))
+            R.id.nav_basededatos  -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
+        }
+        binding.drawerLayout.closeDrawers()
+        return true
+    }
+
+    override fun onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(binding.navView)) {
+            binding.drawerLayout.closeDrawers()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
 
     fun performOCROnImage(imagePath: String): Pair<String, String> {
         // Crea una instancia de TessBaseAPI
@@ -336,69 +377,51 @@ class MamitasAppActivity : AppCompatActivity() {
     }
     // Función para llamar al script Python que procesa la imagen.
     private fun processImage(uri: Uri) {
-        val imagePath = getPath(this, uri) ?: run {
-            Toast.makeText(this, "Error al obtener la ruta de la imagen.", Toast.LENGTH_SHORT).show()
+        val path = getPath(this, uri)
+        if (path == null) {
+            Toast.makeText(this, "No se pudo obtener ruta", Toast.LENGTH_SHORT).show()
             return
         }
-        copyTessDataFiles(this)
-
-        lastImagePath = imagePath
+        lastImagePath = path
 
         try {
-            val (maxStr, minStr) = performOCROnImage(imagePath)
-            lastMaxTemp = maxStr
-            lastMinTemp = minStr
+            val (maxS, minS) = performOCROnImage(path)
+            lastMaxTemp = maxS
+            lastMinTemp = minS
 
-            val maxTemp = maxStr.toFloatOrNull()
-            val minTemp = minStr.toFloatOrNull()
+            binding.tvMaxTemp.text = "Max: ${maxS}°C"
+            binding.tvMinTemp.text = "Min: ${minS}°C"
+            binding.tvMaxTemp.visibility = View.VISIBLE
+            binding.tvMinTemp.visibility = View.VISIBLE
 
-            // Caso: valores válidos y ambos en rango
-            if (maxTemp != null && minTemp != null
-                && maxTemp <= 40f && minTemp >= 15f) {
-                showResults(maxStr, minStr)
-                // nada más, dejamos los botones visibles como antes
-                tvMessage.visibility = View.GONE
-                btnStart.visibility = View.VISIBLE
-                btnModifyManual.visibility = View.VISIBLE
+            val max = maxS.toFloatOrNull()
+            val min = minS.toFloatOrNull()
 
-            } else if (maxTemp != null && minTemp != null) {
-                // Ambos detectados pero uno o ambos fuera de rango: mostramos mensaje
-                showResults(maxStr, minStr)
-                btnStart.visibility = View.VISIBLE
-                btnModifyManual.visibility = View.VISIBLE
-                tvMessage.visibility = View.VISIBLE
-
-                // Construimos el texto según el caso
-                tvMessage.text = when {
-                    minTemp < 15f && maxTemp > 40f ->
-                        "Mín <15°C y Máx >40°C. ¿Es correcto? Pulsa Start o Modificar."
-                    minTemp < 15f ->
-                        "Mínima <15°C. ¿Es correcta? Start o Modificar."
-                    maxTemp > 40f ->
-                        "Máxima >40°C. ¿Es correcta? Start o Modificar."
-                    else -> ""
+            when {
+                max == null || min == null -> {
+                    // Saltar directo a edición
+                    Intent(this, ResultActivity::class.java).also { it.putExtra("imagePath", path) }
+                        .let { startActivity(it) }
                 }
-
-            } else {
-                // Falló OCR en alguno: vamos directo a edición manual
-                Intent(this, ResultActivity::class.java).also { intent ->
-                    intent.putExtra("imagePath", imagePath)
-                    intent.putExtra("max_temp", maxStr)
-                    intent.putExtra("min_temp", minStr)
-                    startActivity(intent)
+                max in 15f..40f && min in 15f..40f -> {
+                    binding.tvMessage.visibility = View.GONE
+                    binding.btnStart.visibility = View.VISIBLE
+                    binding.btnModifyManual.visibility = View.VISIBLE
+                }
+                else -> {
+                    binding.tvMessage.visibility = View.VISIBLE
+                    binding.btnStart.visibility = View.VISIBLE
+                    binding.btnModifyManual.visibility = View.VISIBLE
+                    binding.tvMessage.text = buildString {
+                        if (min < 15f) append("Mín <15°C. ")
+                        if (max > 40f) append("Máx >40°C. ")
+                        append("¿Es correcto? Pulsa Start o Modificar.")
+                    }
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Error en OCR: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Error OCR: ${e.message}", Toast.LENGTH_LONG).show()
         }
-
-    }
-
-    private fun showResults(max: String, min: String) {
-        tvMaxTemp.text = "Max: ${max}°C"
-        tvMinTemp.text = "Min: ${min}°C"
-        listOf(tvMaxTemp, tvMinTemp).forEach { it.visibility = View.VISIBLE }
     }
 }
 
