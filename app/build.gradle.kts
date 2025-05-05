@@ -24,7 +24,9 @@ android {
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }
-
+    buildFeatures {
+        viewBinding = true
+    }
 
     buildTypes {
         release {
@@ -75,6 +77,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation("androidx.coordinatorlayout:coordinatorlayout")
+    implementation("com.google.android.material:material")
+    implementation("androidx.appcompat:appcompat")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

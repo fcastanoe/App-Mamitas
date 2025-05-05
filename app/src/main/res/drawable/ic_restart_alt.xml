@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Parte superior del ícono: flecha que indica la recarga -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12 6V3L8 7l4 4V8c3.31 0 6 2.69 6 6 0 1.28-.39 2.47-1.06 3.48l1.43 1.43C19.3 16.73 20 14.44 20 12c0-4.42-3.58-8-8-8z" />
+
+    <!-- Parte inferior del ícono: flecha opuesta para completar el ciclo -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6.06 8.52l1.43-1.43C4.7 7.27 4 9.56 4 12c0 4.42 3.58 8 8 8v3l-4 4 4-4v-3c-3.31 0-6-2.69-6-6 0-1.28.39-2.47 1.06-3.48z" />
+</vector>

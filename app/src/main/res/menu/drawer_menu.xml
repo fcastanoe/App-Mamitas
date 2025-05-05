@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_inicio"
+        android:icon="@drawable/ic_restart_alt"
+        android:title="Inicio" />
+
+    <item
+        android:id="@+id/nav_formulario"
+        android:icon="@drawable/ic_dynamic_form"
+        android:title="Formulario Paciente" />
+
+    <item
+        android:id="@+id/nav_imagenes"
+        android:icon="@drawable/ic_image_search"
+        android:title="Imágenes Termográficas" />
+
+    <item
+        android:id="@+id/nav_resultados"
+        android:icon="@drawable/ic_bar_chart"
+        android:title="Resultados" />
+
+    <item
+        android:id="@+id/nav_basededatos"
+        android:icon="@drawable/ic_card_travel"
+        android:title="Base de Datos" />
+
+</menu>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Contenido principal: Toolbar + FrameLayout con fondo y botones -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Toolbar -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#CF56ABEC"
+            app:navigationIcon="@drawable/ic_menu"
+            app:title="ThermoMater AI"
+            app:titleCentered="true"
+            app:titleTextAppearance="@style/Toolbar.Title"
+            app:menu="@menu/toolbar_menu"/>
+
+        <!-- Área de contenido debajo del Toolbar -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- Imagen de fondo -->
+            <ImageView
+                android:id="@+id/bg_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/captura"
+                android:scaleType="centerCrop"
+                android:alpha="0.6"/>
+
+            <!-- Grid 2x2 de botones, icono arriba, texto debajo -->
+            <!-- Layout libre con ConstraintLayout -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/icon_formulario"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="75dp"
+                    android:layout_marginTop="120dp"
+                    android:src="@drawable/ic_dynamic_form"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_formulario"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="175dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="200dp"
+                    android:backgroundTint="#8856ABEC"
+                    android:text="Formulario"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/Toolbar.Title"
+                    android:textColor="#888888"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/icon_imagenes"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="260dp"
+                    android:layout_marginTop="120dp"
+                    android:src="@drawable/ic_image_search"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_imagenes"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="175dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="200dp"
+                    android:layout_marginEnd="20dp"
+                    android:backgroundTint="#8856ABEC"
+                    android:text="Imágenes"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/Toolbar.Title"
+                    android:textColor="#888888"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/icon_resultados"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_marginStart="75dp"
+                    android:layout_marginTop="330dp"
+                    android:src="@drawable/ic_bar_chart"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Botón Base de Datos abajo-derecha -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_resultados"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="175dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginBottom="200dp"
+                    android:backgroundTint="#8856ABEC"
+                    android:icon="@drawable/ic_bar_chart"
+                    android:text="Resultados"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/Toolbar.Title"
+                    android:textColor="#888888"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <ImageView
+                    android:id="@+id/icon_basededatos"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_marginStart="260dp"
+                    android:layout_marginTop="330dp"
+                    android:src="@drawable/ic_card_travel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_basededatos"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="175dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginBottom="200dp"
+                    android:backgroundTint="#8856ABEC"
+                    android:icon="@drawable/ic_card_travel"
+                    android:text="Base de Datos"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/Toolbar.Title"
+                    android:textColor="#888888"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Navigation Drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#CF56ABEC"
+        app:itemTextAppearance="@style/DrawerItemStyle"
+        app:itemIconTint="@android:color/white"
+        app:itemTextColor="@android:color/white"
+        app:menu="@menu/drawer_menu"/>
+
+</androidx.drawerlayout.widget.DrawerLayout>
