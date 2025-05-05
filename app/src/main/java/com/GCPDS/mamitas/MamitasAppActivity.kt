@@ -31,6 +31,9 @@ import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
 import com.GCPDS.mamitas.databinding.ActivityMamitasAppBinding
 import com.google.android.material.navigation.NavigationView
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 
 // 1) Convierte un Bitmap a escala de grises.
 //    Mantiene el mismo tamaño que el bitmap original.
@@ -251,6 +254,15 @@ class MamitasAppActivity: AppCompatActivity(),
 
     }
 
+    private fun loadModelBuffer(context: Context): MappedByteBuffer =
+        context.assets.openFd("models/ResUNet_efficientnetb3_Mamitas.tflite").use { afd ->
+            FileInputStream(afd.fileDescriptor).channel.map(
+                FileChannel.MapMode.READ_ONLY,
+                afd.startOffset,
+                afd.declaredLength
+            )
+        }
+
     /** Ejecuta la inferencia TensorFlow Lite en background */
     private fun runInference() {
         binding.progressBar.visibility = View.VISIBLE
@@ -258,9 +270,10 @@ class MamitasAppActivity: AppCompatActivity(),
         Thread {
             try {
                 // Cargo modelo
-                val modelFile = File(filesDir, "models/ResUNet_efficientnetb3_Mamitas.tflite")
+                val buffer = loadModelBuffer(this)
                 val options = Interpreter.Options().addDelegate(FlexDelegate())
-                val interpreter = Interpreter(modelFile, options)
+                val interpreter = Interpreter(buffer, options)
+
 
                 // Preparo bitmap
                 val bmp = BitmapFactory.decodeFile(lastImagePath)
