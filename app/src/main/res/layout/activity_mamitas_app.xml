@@ -56,16 +56,17 @@
                     android:layout_marginTop="16dp" />
 
                 <!-- Imagen seleccionada -->
-                <ImageView
+                <com.github.chrisbanes.photoview.PhotoView
                     android:id="@+id/imgSelected"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerInside"
                     app:layout_constraintTop_toBottomOf="@id/btnSelectImage"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintDimensionRatio="H,16:9"
-                    android:layout_marginTop="16dp" />
+                    android:layout_marginTop="16dp"/>
 
                 <!-- TextViews y botones auxiliares (idénticos) -->
                 <TextView

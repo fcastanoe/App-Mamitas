@@ -41,16 +41,16 @@ class MainActivity : AppCompatActivity(),
         binding.navView.setNavigationItemSelectedListener(this)
 
         // Listeners de los botones del layout principal
-        binding.btnFormulario.setOnClickListener {
+        binding.btnForm.setOnClickListener {
             startActivity(Intent(this, FormularioActivity::class.java))
         }
-        binding.btnImagenes.setOnClickListener {
+        binding.btnImages.setOnClickListener {
             startActivity(Intent(this, MamitasAppActivity::class.java))
         }
-        binding.btnResultados.setOnClickListener {
+        binding.btnResults.setOnClickListener {
             startActivity(Intent(this, ResultadosActivity::class.java))
         }
-        binding.btnBasededatos.setOnClickListener {
+        binding.btnDb.setOnClickListener {
             startActivity(Intent(this, BaseDeDatosActivity::class.java))
         }
     }
