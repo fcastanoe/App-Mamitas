@@ -28,6 +28,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
 import android.view.MenuItem
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import com.GCPDS.mamitas.databinding.ActivityMamitasAppBinding
 import com.google.android.material.navigation.NavigationView
@@ -36,7 +39,7 @@ import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
 // 1) Convierte un Bitmap a escala de grises.
-//    Mantiene el mismo tamaño que el bitmap original.
+    //    Mantiene el mismo tamaño que el bitmap original.
 fun bitmapToGray(input: Bitmap): Bitmap {
     val width = input.width
     val height = input.height
@@ -150,8 +153,6 @@ private fun getDataColumn(
     }
     return null
 }
-
-
 
 class MamitasAppActivity: AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
@@ -301,14 +302,12 @@ class MamitasAppActivity: AppCompatActivity(),
                     lastMinTemp
                 ).asList()
 
-                val segOverlay = results[1].toString()
-                val dermContours = results[2].toString()
-                val tempsJson = results[3].toString()
+                val dermContours = results[0].toString()
+                val tempsJson = results[1].toString()
 
                 runOnUiThread {
                     binding.progressBar.visibility = View.GONE
                     startActivity(Intent(this, PlotActivity::class.java).apply {
-                        putExtra("segOverlayPath", segOverlay)
                         putExtra("dermContourPath", dermContours)
                         putExtra("tempsJson", tempsJson)
                     })
@@ -437,5 +436,4 @@ class MamitasAppActivity: AppCompatActivity(),
         }
     }
 }
-
 

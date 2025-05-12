@@ -207,4 +207,4 @@ def run_plot(image_path, files_dir, max_temp_str, min_temp_str):
     temp_map = (img.astype(np.float32)/255)*(mx-mn)+mn
     temps_dict = compute_dermatome_temperatures(temp_map, derms)
 
-    return seg_png, seg_overlay_png, derm_overlay_png, json.dumps(temps_dict)
+    return derm_overlay_png, json.dumps(temps_dict)

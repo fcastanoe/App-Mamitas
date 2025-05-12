@@ -1,47 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 1) máscara sobre gris -->
-    <ImageView
-        android:id="@+id/imgSegOverlay"
+    <!-- Contenido principal -->
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:scaleType="fitCenter"
-        android:contentDescription="Máscara sobre gris"/>
+        android:layout_height="match_parent">
 
-    <!-- 2) contornos dermatomas -->
-    <ImageView
-        android:id="@+id/imgDermContours"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:scaleType="fitCenter"
-        android:contentDescription="Contornos de dermatomas"/>
-
-    <!-- 3) lista desplazable de temperaturas -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp">
-
-        <LinearLayout
-            android:id="@+id/tempsContainer"
-            android:orientation="vertical"
+        <!-- 1) Toolbar -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </ScrollView>
+            android:layout_height="?attr/actionBarSize"
+            android:background="#CF56ABEC"
+            app:title="ThermoMater AI"
+            app:titleCentered="true"
+            app:navigationIcon="@drawable/ic_menu"
+            app:titleTextAppearance="@style/Toolbar.Title"
+            app:menu="@menu/toolbar_menu"/>
 
-    <!-- 4) Botón para resetear y escoger otra -->
-    <Button
-        android:id="@+id/btnReset"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Nueva imagen"
-        android:layout_margin="16dp"/>
-</LinearLayout>
+        <!-- 2) Frame con fondo e interfaz -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Imagen de fondo semitransparente -->
+            <ImageView
+                android:id="@+id/bg_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/captura"
+                android:scaleType="centerCrop"
+                android:alpha="0.6"/>
+
+            <!-- Contenido interno -->
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp">
+
+                <!-- 1) Sólo contornos de dermatomas -->
+                <ImageView
+                    android:id="@+id/imgDermContours"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="3"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Contornos de dermatomas"/>
+
+                <!-- 2) Lista desplazable de temperaturas -->
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="2"
+                    android:padding="8dp">
+                    <LinearLayout
+                        android:id="@+id/tempsContainer"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                </ScrollView>
+
+                <!-- 3) Botón Guardar -->
+                <Button
+                    android:id="@+id/btnSave"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Guardar"
+                    android:layout_marginTop="8dp"/>
+
+                <!-- 4) Botón Nueva imagen -->
+                <Button
+                    android:id="@+id/btnReset"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nueva imagen"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Navigation Drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#CF56ABEC"
+        app:itemTextAppearance="@style/DrawerItemStyle"
+        app:itemIconTint="@android:color/white"
+        app:itemTextColor="@android:color/white"
+        app:menu="@menu/drawer_menu"/>
+</androidx.drawerlayout.widget.DrawerLayout>
+
+
