@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("com.chaquo.python")
     id("kotlin-kapt")
+    id("kotlin-parcelize")
 }
 
 android {
