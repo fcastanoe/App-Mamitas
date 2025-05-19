@@ -14,8 +14,9 @@
         android:title="Carpeta"
         app:menu="@menu/menu_folder"/>
 
-    <!-- Contenido (vacío por ahora) -->
-    <FrameLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSubfolders"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:padding="16dp"/>
 </LinearLayout>

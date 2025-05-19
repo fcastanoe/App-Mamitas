@@ -15,10 +15,21 @@ class FormularioActivity : AppCompatActivity() {
 
     private lateinit var rvPatients: RecyclerView
     private val patients = mutableListOf<Patient>()
+    private val prefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
+    private val gson = com.google.gson.Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_formulario)
+
+        // ADD: cargar pacientes guardados de prefs
+        prefs.getStringSet("patients", emptySet())!!
+            .forEach { folderName ->
+                // aquí asumimos sólo que el nombre de carpeta es "First_Last"
+                prefs.getString("patient_$folderName", null)?.let { json ->
+                    patients.add(gson.fromJson(json, Patient::class.java))
+                    }
+            }
 
         val btnCreate = findViewById<Button>(R.id.btnCreate)
         rvPatients = findViewById(R.id.rvPatients)
@@ -35,48 +46,83 @@ class FormularioActivity : AppCompatActivity() {
                 }
             },
             onOptionsClick = { patient ->
-                // Muestra diálogo de detalles
+                // Muestra diálogo con Info, Modificar y Eliminar
                 AlertDialog.Builder(this)
-                    .setTitle("Detalles")
+                    .setTitle("Paciente: ${patient.first} ${patient.last}")
                     .setMessage(
-                        "Nombre: ${patient.first} ${patient.last}\n" +
-                                "Edad: ${patient.age}\n" +
-                                "Peso: ${patient.weight}\n" +
-                                "Estatura: ${patient.height}"
+                        "Edad: ${patient.age}\n" +
+                                "Peso: ${patient.weight} kg\n" +
+                                "Estatura: ${patient.height} cm"
                     )
                     .setPositiveButton("OK", null)
-                    .show()
+                    .setNeutralButton("Modificar") { _, _ ->
+                        // Lanzar NewPatientActivity para editar
+                        Intent(this, NewPatientActivity::class.java).also {
+                            it.putExtra("editPatient", patient)
+                        }.let {
+                            startActivityForResult(it, REQUEST_EDIT_PATIENT)
+                        }
+                    }
+                        .setNegativeButton("Eliminar") { _, _ ->
+                            // Borrar carpeta y prefs
+                            val fname = "${patient.first}_${patient.last}"
+                            File(filesDir, fname).deleteRecursively()
+                            val set = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
+                            set.remove(fname)
+                            prefs.edit().putStringSet("patients", set).remove("patient_$fname").apply()
+                            // Actualiza lista
+                            val idx = patients.indexOf(patient)
+                            patients.removeAt(idx)
+                            rvPatients.adapter?.notifyItemRemoved(idx)
+                        }.show()
             }
         )
         rvPatients.adapter = adapter
 
         // 2) Botón Crear paciente
         btnCreate.setOnClickListener {
-            startActivityForResult(
-                Intent(this, NewPatientActivity::class.java),
-                REQUEST_NEW_PATIENT
-            )
+            Intent(this, NewPatientActivity::class.java).let {
+                startActivityForResult(it, REQUEST_NEW_PATIENT)
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_NEW_PATIENT && resultCode == RESULT_OK && data != null) {
+        if ((requestCode == REQUEST_NEW_PATIENT || requestCode == REQUEST_EDIT_PATIENT)
+            && resultCode == RESULT_OK && data != null) {
             val patient = data.getParcelableExtra<Patient>("newPatient")
             patient?.let {
                 // Crea carpeta física
                 val folderName = "${it.first}_${it.last}"
                 File(filesDir, folderName).apply { if (!exists()) mkdirs() }
 
+                // ADD: guardar en prefs
+                val set = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
+                set.add(folderName)
+                prefs.edit()
+                    .putStringSet("patients", set)
+                    .putString("patient_$folderName", gson.toJson(it))
+                    .apply()
+
                 // Añade a la lista y notifica
-                patients.add(it)
-                rvPatients.adapter?.notifyItemInserted(patients.size - 1)
+                val idx = patients.indexOfFirst { p ->
+                    "${p.first}_${p.last}" == folderName
+                }
+                if (idx >= 0) {
+                    patients[idx] = it
+                    rvPatients.adapter?.notifyItemChanged(idx)
+                } else {
+                    patients.add(it)
+                    rvPatients.adapter?.notifyItemInserted(patients.size - 1)
+                }
             }
         }
     }
 
     companion object {
         const val REQUEST_NEW_PATIENT = 1001
+        const val REQUEST_EDIT_PATIENT = 1002
     }
 }
 

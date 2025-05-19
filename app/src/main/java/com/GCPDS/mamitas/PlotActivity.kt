@@ -13,7 +13,9 @@ import java.io.File
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.WindowCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -23,9 +25,11 @@ import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
 import java.io.FileOutputStream
 
+
 class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var toggle: ActionBarDrawerToggle
+    private val prefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +81,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // 3) Botón Guardar → FormularioActivity
         btnSave.setOnClickListener {
-            startActivity(Intent(this, FormularioActivity::class.java))
+            showPatientPicker()
         }
 
         // 4) Botón Nueva imagen (igual que antes)
@@ -85,6 +89,105 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             finish()  // cierra PlotActivity para seleccionar otra
         }
     }
+
+    /**
+     * Muestra un AlertDialog con:
+     *  - Lista de pacientes (nombres de carpeta en filesDir)
+     *  - Opción “Crear nuevo paciente”
+     */
+    private fun showPatientPicker() {
+        // 1) Obtenemos carpetas de pacientes
+        val patientDirs = prefs.getStringSet("patients", emptySet())!!
+                   .toMutableList()
+        patientDirs.add("Crear nuevo paciente")
+
+        // 2) Creamos el diálogo
+        AlertDialog.Builder(this)
+            .setTitle("Selecciona paciente")
+            .setItems(patientDirs.toTypedArray()) { dialog, which ->
+                val choice = patientDirs[which]
+                if (choice == "Crear nuevo paciente") {
+                    // Lanzamos NewPatientActivity
+                    startActivityForResult(
+                        Intent(this, NewPatientActivity::class.java),
+                        REQUEST_NEW_PATIENT_SAVE
+                    )
+                } else {
+                    // Directamente guardamos en el paciente elegido
+                    saveToPatient(choice)
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    // Capturamos también el resultado de crear paciente desde aquí
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_NEW_PATIENT_SAVE && resultCode == RESULT_OK && data != null) {
+            val patient = data.getParcelableExtra<Patient>("newPatient")!!
+            // Creamos carpeta física en filesDir
+            val folderName = "${patient.first}_${patient.last}"
+            File(filesDir, folderName).apply { if (!exists()) mkdirs() }
+            // ADD: guardar en prefs igual que en FormularioActivity
+            val set = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
+            set.add(folderName)
+            prefs.edit()
+                .putStringSet("patients", set)
+                .putString("patient_$folderName", com.google.gson.Gson().toJson(patient))
+                .apply()
+            // Ahora guardamos en ella
+            saveToPatient(folderName)
+        }
+        // También déjalo para el caso de volver de Nuevo paciente en FormularioActivity
+        // y el REQUEST_NEW_PATIENT original si lo necesitas
+    }
+
+    /**
+     * Se encarga de:
+     *  - Crear subcarpetas Temperaturas/, Imagenes/, Grafica/ (si no existen)
+     *  - Dentro de ambas, contar cuántos tN ya hay, crear t<next>/
+     *  - Guardar JSON de temperaturas en Temperaturas/tN/data.json
+     *  - Guardar la imagen ploteada en Imagenes/tN/image.png
+     *  - No tocar Grafica/ (se deja vacía)
+     *  - Mostrar Toast y cerrar diálogo (o activity)
+     */
+    private fun saveToPatient(patientFolder: String) {
+        // 1) Rutas base
+        val baseDir = File(filesDir, patientFolder)
+        val tempsDir = File(baseDir, "Temperaturas").apply { if (!exists()) mkdirs() }
+        val imgsDir  = File(baseDir, "Imagenes").apply { if (!exists()) mkdirs() }
+        val graphDir = File(baseDir, "Grafica").apply { if (!exists()) mkdirs() }
+
+        // 2) Determinar siguiente índice tN (ej: t0, t1, ...)
+        val nextIndex = tempsDir.listFiles()?.count { it.isDirectory } ?: 0
+        val tDirName = "t$nextIndex"
+
+        // 3) Crear subcarpetas tN en Temps e Imgs
+        val tTemps = File(tempsDir, tDirName).apply { mkdirs() }
+        val tImgs  = File(imgsDir,  tDirName).apply { mkdirs() }
+        // NO creamos subdir en graphDir (quedará solo Grafica/)
+
+        // 4) Guardar datos de temperaturas
+        val jsonStr = intent.getStringExtra("tempsJson") ?: "{}"
+        File(tTemps, "data.json").writeText(jsonStr)
+
+        // 5) Guardar imagen ploteada
+        //    Asumimos que en PlotActivity tienes la ruta de la imagen overlay o similares
+        val imgPath = intent.getStringExtra("dermContourPath")
+            ?: intent.getStringExtra("segOverlayPath")
+        imgPath?.let {
+            File(it).copyTo(File(tImgs, "image.png"), overwrite = true)
+        }
+
+        // 6) Feedback al usuario
+        Toast.makeText(this, "Guardado correctamente en $patientFolder/$tDirName", Toast.LENGTH_LONG).show()
+    }
+
+    companion object {
+        private const val REQUEST_NEW_PATIENT_SAVE = 2001
+    }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (toggle.onOptionsItemSelected(item)) return true

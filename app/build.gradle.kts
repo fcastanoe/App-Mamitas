@@ -97,4 +97,5 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
     implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
 }
