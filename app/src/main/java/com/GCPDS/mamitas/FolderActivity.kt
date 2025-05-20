@@ -1,5 +1,6 @@
 package com.GCPDS.mamitas
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
+import com.GCPDS.mamitas.FileAdapter
 
 class SimpleStringAdapter(
     private val items: List<String>,
@@ -74,18 +76,22 @@ class FolderActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         val baseDir = File(filesDir, "${patient.first}_${patient.last}")
         val subs = baseDir.listFiles { f -> f.isDirectory }?.map { it.name } ?: emptyList()
-        rv.adapter = SimpleStringAdapter(subs) { folderName ->
-            // Al pulsar “Temperaturas”, “Imagenes” o “Grafica”:
-            showTNList(File(baseDir, folderName))
-        }
+        // Usa FileAdapter en lugar de SimpleStringAdapter
+        rv.adapter = FileAdapter(
+            items    = subs,
+            baseDir  = baseDir,
+            showFiles = false,          // aquí solo carpetas
+            onClick  = { f ->
+                // Si es carpeta Temperaturas/Imagenes/Grafica, navegar
+                if (f.isDirectory) {
+                    val isTn = f.name.matches(Regex("""t\d+"""))
+                    startActivity(Intent(this, FileBrowserActivity::class.java).apply {
+                        putExtra(FileBrowserActivity.EXTRA_PATH, f.absolutePath)
+                        putExtra(FileBrowserActivity.EXTRA_SHOW_FILES, isTn)
+                    })
+                }
+            }
+        )
     }
 
-    private fun showTNList(dir: File) {
-        val tns = dir.listFiles { f -> f.isDirectory }?.map { it.name } ?: listOf()
-        AlertDialog.Builder(this)
-            .setTitle("Dentro de ${dir.name}")
-            .setItems(tns.toTypedArray(), null)
-            .setPositiveButton("OK", null)
-            .show()
-    }
 }
