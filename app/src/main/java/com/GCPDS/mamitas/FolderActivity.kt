@@ -82,13 +82,21 @@ class FolderActivity : AppCompatActivity() {
             baseDir  = baseDir,
             showFiles = false,          // aquí solo carpetas
             onClick  = { f ->
-                // Si es carpeta Temperaturas/Imagenes/Grafica, navegar
-                if (f.isDirectory) {
-                    val isTn = f.name.matches(Regex("""t\d+"""))
-                    startActivity(Intent(this, FileBrowserActivity::class.java).apply {
-                        putExtra(FileBrowserActivity.EXTRA_PATH, f.absolutePath)
-                        putExtra(FileBrowserActivity.EXTRA_SHOW_FILES, isTn)
-                    })
+                when (f.name) {
+                    "Grafica" -> {
+                        // 1) Si es la carpeta Grafica, lanza la ChartActivity
+                        startActivity(Intent(this, ChartActivity::class.java).apply {
+                            putExtra(ChartActivity.EXTRA_PATIENT_FOLDER, baseDir.absolutePath)
+                        })
+                    }
+                    else -> {
+                        // 2) Temperaturas / Imagenes o sub-carpeta tN: abre FileBrowserActivity
+                        val isTn = f.name.matches(Regex("""t\d+"""))
+                        startActivity(Intent(this, FileBrowserActivity::class.java).apply {
+                            putExtra(FileBrowserActivity.EXTRA_PATH, f.absolutePath)
+                            putExtra(FileBrowserActivity.EXTRA_SHOW_FILES, isTn)
+                        })
+                    }
                 }
             }
         )
