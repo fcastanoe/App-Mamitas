@@ -8,21 +8,50 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.os.Parcelable
+import android.view.MenuItem
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.navigation.NavigationView
 import kotlinx.parcelize.Parcelize
 import java.io.File
 
-class FormularioActivity : AppCompatActivity() {
+class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var rvPatients: RecyclerView
     private val patients = mutableListOf<Patient>()
     private val prefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
     private val gson = com.google.gson.Gson()
 
+    private lateinit var toggle: ActionBarDrawerToggle
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navView: NavigationView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_formulario)
 
-        // ADD: cargar pacientes guardados de prefs
+        drawerLayout = findViewById(R.id.drawer_layout)
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+
+        setSupportActionBar(toolbar)
+
+        toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+
+        navView = findViewById(R.id.nav_view)
+        navView.setNavigationItemSelectedListener(this)
+
+        // cargar pacientes guardados de prefs
         prefs.getStringSet("patients", emptySet())!!
             .forEach { folderName ->
                 // aquí asumimos sólo que el nombre de carpeta es "First_Last"
@@ -34,7 +63,7 @@ class FormularioActivity : AppCompatActivity() {
         val btnCreate = findViewById<Button>(R.id.btnCreate)
         rvPatients = findViewById(R.id.rvPatients)
 
-        // 1) Configuro RecyclerView
+        // Configuro RecyclerView
         rvPatients.layoutManager = LinearLayoutManager(this)
         val adapter = PatientAdapter(
             patients,
@@ -79,12 +108,30 @@ class FormularioActivity : AppCompatActivity() {
         )
         rvPatients.adapter = adapter
 
-        // 2) Botón Crear paciente
+        // Botón Crear paciente
         btnCreate.setOnClickListener {
             Intent(this, NewPatientActivity::class.java).let {
                 startActivityForResult(it, REQUEST_NEW_PATIENT)
             }
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Esto permite que el toggle (la “hamburguesa”) abra/cierre el drawer
+        if (toggle.onOptionsItemSelected(item)) return true
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_inicio      -> { /* quizás recreate() aquí */ }
+            R.id.nav_formulario  -> { /* ya estás */ }
+            R.id.nav_imagenes    -> startActivity(Intent(this, MamitasAppActivity::class.java))
+            R.id.nav_resultados  -> startActivity(Intent(this, ResultadosActivity::class.java))
+            R.id.nav_basededatos -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
+        }
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -8,13 +8,13 @@
 
     <item
         android:id="@+id/nav_formulario"
-        android:icon="@drawable/ic_dynamic_form"
-        android:title="Formulario Paciente" />
+        android:icon="@drawable/ic_patient"
+        android:title="Crear Paciente" />
 
     <item
         android:id="@+id/nav_imagenes"
         android:icon="@drawable/ic_image_search"
-        android:title="Imágenes Termográficas" />
+        android:title="Análisis de Dermatomas" />
 
     <item
         android:id="@+id/nav_resultados"
