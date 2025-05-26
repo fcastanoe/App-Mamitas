@@ -330,6 +330,7 @@ class MamitasAppActivity: AppCompatActivity(),
 
                 val dermContours = results[0].toString()
                 val tempsJson = results[1].toString()
+                val coloredPath = results[2].toString()
 
                 runOnUiThread {
                     binding.progressBar.visibility = View.GONE
@@ -337,6 +338,7 @@ class MamitasAppActivity: AppCompatActivity(),
                     startActivity(Intent(this, PlotActivity::class.java).apply {
                         putExtra("dermContourPath", dermContours)
                         putExtra("tempsJson", tempsJson)
+                        putExtra("dermColoredPath",   coloredPath)
                     })
                 }
             } catch (e: Exception) {

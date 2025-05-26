@@ -55,7 +55,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             .skipMemoryCache(true)
             .diskCacheStrategy(DiskCacheStrategy.NONE)
 
-        intent.getStringExtra("dermContourPath")?.let { path ->
+        intent.getStringExtra("dermColoredPath")?.let { path ->
             Glide.with(this)
                 .load(File(path))
                 .apply(noCacheOpts)
@@ -171,7 +171,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // 5) Guardar imagen ploteada
         //    Asumimos que en PlotActivity tienes la ruta de la imagen overlay o similares
         val imgPath = intent.getStringExtra("dermContourPath")
-            ?: intent.getStringExtra("segOverlayPath")
+            ?: intent.getStringExtra("dermContourPath")
         imgPath?.let {
             val dest = File(tImgs, "image.png")
             File(it).copyTo(dest, overwrite = true)

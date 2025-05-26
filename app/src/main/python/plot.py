@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 from scipy.spatial import Delaunay
+from PIL import Image
+import matplotlib.colors as mcolors
+from matplotlib.colorbar import ColorbarBase
+import matplotlib.cm as cm
 
 def define_contour(dermatomes):
     without_contours = dermatomes.copy()
@@ -160,6 +164,84 @@ def compute_dermatome_temperatures(temp_map, derms):
             res[name]= float(temp_map[mask].mean())
     return res
 
+def make_both_feet_colored(
+    template_path: str,
+    temps_right: dict,
+    temps_left: dict,
+    mn: float,
+    mx: float,
+    out_path: str
+):
+    """
+    - template_path: plantilla en gris con etiquetas 10,20,30… para el pie derecho.
+    - temps_right: dict de zonas PD (ej 'Medial PD':29.3).
+    - temps_left:  dict de zonas PI  (ej 'Medial PI':28.7).
+    - mn,mx: rango min/max para el colormap.
+    - out_path: ruta donde salvar el PNG.
+    """
+
+    # 1) Colormap + muchos bins para mayor resolución
+    cmap = plt.get_cmap('coolwarm')
+    bins = np.linspace(mn, mx, 31)  # 100 niveles de color entre mn y mx
+    norm = mcolors.BoundaryNorm(bins, ncolors=cmap.N, clip=True)
+    sm   = cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    # 2) Mapa nombre→etiqueta
+    name2label = {
+        'Medial PD':10, 'Lateral PD':20, 'Sural PD':30,
+        'Tibial PD':40,'Saphenous PD':50,
+        'Medial PI':11, 'Lateral PI':21,'Sural PI':31,
+        'Tibial PI':41,'Saphenous PI':51
+    }
+
+    # 3) Cargo la plantilla original (derecho)
+    tmpl = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+    if tmpl is None:
+        raise FileNotFoundError(f"No pude leer plantilla: {template_path}")
+    h, w = tmpl.shape
+
+    # 4) Genero la plantilla para el izquierdo desplazando etiquetas +1
+    left_tmpl = tmpl.copy()
+    left_tmpl[left_tmpl != 0] += 1
+
+    # 5) Preparo buffers RGBA
+    right_col = np.zeros((h, w, 4), dtype=np.uint8)
+    left_col  = np.zeros((h, w, 4), dtype=np.uint8)
+
+    # 6) Pinto el pie derecho sobre right_col
+    for name, temp in temps_right.items():
+        lbl  = name2label[name]
+        mask = (tmpl == lbl)
+        rgba = (np.array(sm.to_rgba(temp)) * 255).astype(np.uint8)
+        right_col[mask] = rgba
+
+    # 7) Pinto el pie izquierdo sobre left_col usando left_tmpl
+    for name, temp in temps_left.items():
+        lbl  = name2label[name]
+        mask = (left_tmpl == lbl)
+        rgba = (np.array(sm.to_rgba(temp)) * 255).astype(np.uint8)
+        left_col[mask] = rgba
+
+    # 8) Ahora sí, invierto horizontalmente SOLO el izquierdo
+    right_col = np.fliplr(right_col)
+
+    # 9) Dibujo los dos pies y la barra de color
+    fig, (ax_r, ax_l, ax_cb) = plt.subplots(
+        1, 3, figsize=(8, 4),
+        gridspec_kw={'width_ratios':[1,1,0.2]}
+    )
+    ax_r.imshow(right_col); ax_r.axis('off')
+    ax_l.imshow(left_col ); ax_l.axis('off')
+
+    cb = ColorbarBase(ax_cb, cmap=cmap, norm=norm, orientation='vertical')
+    cb.set_label('Temperatura (°C)')
+    cb.set_ticks([mn, mx])
+    cb.set_ticklabels([f"{mn:.1f}", f"{mx:.1f}"])
+
+    plt.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+
 
 def run_plot(image_path, files_dir, max_temp_str, min_temp_str):
    # 0) Comprueba que mask.png existe
@@ -207,4 +289,17 @@ def run_plot(image_path, files_dir, max_temp_str, min_temp_str):
     temp_map = (img.astype(np.float32)/255)*(mx-mn)+mn
     temps_dict = compute_dermatome_temperatures(temp_map, derms)
 
-    return derm_overlay_png, json.dumps(temps_dict)
+    # Separa según sufijo:
+    temps_right = {k: v for k, v in temps_dict.items() if k.endswith("PD")}
+    temps_left  = {k: v for k, v in temps_dict.items() if k.endswith("PI")}
+
+    colored_path = os.path.join(files_dir, "derm_colored_both.png")
+    make_both_feet_colored(
+        right_t,
+        temps_right,
+        temps_left,
+        mn, mx,
+        colored_path
+    )
+
+    return derm_overlay_png, json.dumps(temps_dict), colored_path
