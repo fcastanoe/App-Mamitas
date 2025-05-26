@@ -6,37 +6,47 @@
 
     <!-- Cuerpo del maletín -->
     <path
+        android:fillColor="@android:color/transparent"
         android:strokeColor="#FF000000"
-        android:strokeWidth="3"
+        android:strokeWidth="2.5"
         android:strokeLineJoin="round"
         android:strokeLineCap="round"
-        android:fillColor="@android:color/transparent"
         android:pathData="M6,18 H42 V40 H6 Z" />
 
-    <!-- Asa cuadrada -->
+    <!-- Asa con esquinas redondeadas -->
     <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="3"
-        android:strokeLineJoin="miter"
-        android:strokeLineCap="round"
         android:fillColor="@android:color/transparent"
-        android:pathData="M14,18 V10 H34 V18" />
-
-    <!-- Pliegue tipo sobre -->
-    <path
         android:strokeColor="#FF000000"
-        android:strokeWidth="3"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M6,18 L24,30 L42,18" />
+        android:pathData="M14,12 H34 V18 H14 Z" />
 
-    <!-- Evilla cuadrada dentro del asa -->
+    <!-- Pliegue: línea diagonal izquierda desde la esquina del maletín hasta el borde de la evilla -->
     <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="3"
-        android:strokeLineJoin="miter"
         android:fillColor="@android:color/transparent"
-        android:pathData="M22,12 H26 V16 H22 Z" />
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6,18 L18,22" />
+
+    <!-- Pliegue: línea diagonal derecha desde la esquina del maletín hasta el borde de la evilla -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M42,18 L30,22" />
+
+    <!-- Evilla rectangular dentro del maletín -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="miter"
+        android:pathData="M18,22 H30 V28 H18 Z" />
 </vector>
+
 
