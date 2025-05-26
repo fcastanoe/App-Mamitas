@@ -151,17 +151,23 @@ private fun getDataColumn(
     return null
 }
 
+
+
 class MamitasAppActivity: AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityMamitasAppBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
+    private var returningFromPlot = false
+
     // Launcher para seleccionar imagen
     private val getContent = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
+            binding.imgSelected.visibility = View.VISIBLE
+
             Glide.with(this).load(it).into(binding.imgSelected)
             processImage(it)
         }
@@ -198,14 +204,7 @@ class MamitasAppActivity: AppCompatActivity(),
 
 
         // 3) Ocultamos al inicio las vistas secundarias
-        listOf(
-            binding.tvMaxTemp,
-            binding.tvMinTemp,
-            binding.tvMessage,
-            binding.btnModifyManual,
-            binding.btnStart,
-            binding.progressBar
-        ).forEach { it.visibility = View.GONE }
+        resetUI()
 
         // 2) Usa el launcher en el listener del botón:
         binding.btnSelectImage.setOnClickListener {
@@ -252,6 +251,14 @@ class MamitasAppActivity: AppCompatActivity(),
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (returningFromPlot) {
+            resetUI()
+            returningFromPlot = false
+        }
+    }
+
     private fun loadModelBuffer(context: Context): MappedByteBuffer =
         context.assets.openFd("models/ResUNet_efficientnetb3_Mamitas.tflite").use { afd ->
             FileInputStream(afd.fileDescriptor).channel.map(
@@ -260,6 +267,28 @@ class MamitasAppActivity: AppCompatActivity(),
                 afd.declaredLength
             )
         }
+
+    private fun resetUI() {
+        // 1) Imagen
+        binding.imgSelected.setImageDrawable(null)
+        binding.imgSelected.visibility = View.GONE
+
+        // 2) Textos y botones secundarios
+        listOf(
+            binding.tvMaxTemp,
+            binding.tvMinTemp,
+            binding.tvMessage,
+            binding.btnModifyManual,
+            binding.btnStart,
+            binding.progressBar
+        ).forEach { it.visibility = View.GONE }
+
+        // 3) Limpia valores previos
+        lastImagePath = ""
+        lastMaxTemp = ""
+        lastMinTemp = ""
+    }
+
 
     /** Ejecuta la inferencia TensorFlow Lite en background */
     private fun runInference() {
@@ -304,6 +333,7 @@ class MamitasAppActivity: AppCompatActivity(),
 
                 runOnUiThread {
                     binding.progressBar.visibility = View.GONE
+                    returningFromPlot = true
                     startActivity(Intent(this, PlotActivity::class.java).apply {
                         putExtra("dermContourPath", dermContours)
                         putExtra("tempsJson", tempsJson)
