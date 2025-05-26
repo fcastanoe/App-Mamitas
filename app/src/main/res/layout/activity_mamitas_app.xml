@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#CF56ABEC"
-            app:title="ThermoMater AI"
+            app:title="Análisis de Dermatomas"
             app:titleCentered="true"
             app:navigationIcon="@drawable/ic_menu"
             app:titleTextAppearance="@style/Toolbar.Title"

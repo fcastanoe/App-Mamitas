@@ -12,7 +12,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
-import com.GCPDS.mamitas.FileAdapter
 
 class SimpleStringAdapter(
     private val items: List<String>,

@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#CF56ABEC"
-            app:title="Formulario"
+            app:title="Pacientes"
             app:titleCentered="true"
             app:navigationIcon="@drawable/ic_menu"
             app:menu="@menu/toolbar_menu"/>

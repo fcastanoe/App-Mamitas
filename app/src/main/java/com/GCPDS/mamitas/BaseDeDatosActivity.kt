@@ -1,20 +1,80 @@
 package com.GCPDS.mamitas
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.view.MenuItem
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.navigation.NavigationView
 
-class BaseDeDatosActivity : AppCompatActivity() {
+class BaseDeDatosActivity : AppCompatActivity(),
+    NavigationView.OnNavigationItemSelectedListener {
+
+    private lateinit var toggle: ActionBarDrawerToggle
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_base_de_datos)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        // 1) Toolbar + Drawer
+        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        val drawer = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer_layout)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        toggle = ActionBarDrawerToggle(
+            this, drawer, toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawer.addDrawerListener(toggle)
+        toggle.syncState()
+        navView.setNavigationItemSelectedListener(this)
+
+        // 2) Listar “assets/Database” → “Caso_1” … “Caso_30”
+        val assetMgr   = assets
+        val cases      = assetMgr.list("Database")?.toList()
+            ?: emptyList()   // debería devolver ["Caso_1","Caso_2",…,"Caso_30"]
+
+        // 3) RecyclerView con AssetAdapter
+        val rvCases = findViewById<RecyclerView>(R.id.rvCases)
+        rvCases.layoutManager = LinearLayoutManager(this)
+        rvCases.adapter = AssetAdapter(
+            items     = cases,
+            assetBase = "Database"
+        ) { name ->
+            // al pulsar “Caso_X” (siempre carpeta), abrimos AssetBrowserActivity
+            startActivity(Intent(this, AssetBrowserActivity::class.java).apply {
+                putExtra(AssetBrowserActivity.EXTRA_ASSET_PATH, "Database/$name")
+            })
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (toggle.onOptionsItemSelected(item)) return true
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_inicio      -> startActivity(Intent(this, MainActivity::class.java))
+            R.id.nav_formulario  -> startActivity(Intent(this, FormularioActivity::class.java))
+            R.id.nav_imagenes    -> startActivity(Intent(this, MamitasAppActivity::class.java))
+            R.id.nav_resultados  -> startActivity(Intent(this, ResultadosActivity::class.java))
+            R.id.nav_basededatos -> { /* Ya estás aquí */ }
+        }
+        findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer_layout)
+            .closeDrawers()
+        return true
+    }
+
+    override fun onBackPressed() {
+        val drawer = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer_layout)
+        if (drawer.isDrawerOpen(findViewById(R.id.nav_view))) {
+            drawer.closeDrawers()
+        } else {
+            super.onBackPressed()
         }
     }
 }

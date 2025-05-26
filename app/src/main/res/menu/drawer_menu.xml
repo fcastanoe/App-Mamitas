@@ -9,7 +9,7 @@
     <item
         android:id="@+id/nav_formulario"
         android:icon="@drawable/ic_patient"
-        android:title="Crear Paciente" />
+        android:title="Pacientes" />
 
     <item
         android:id="@+id/nav_imagenes"

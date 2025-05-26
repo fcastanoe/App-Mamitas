@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
 import org.json.JSONObject
-import com.GCPDS.mamitas.FileAdapter
 
 class FileBrowserActivity : AppCompatActivity() {
     companion object {
