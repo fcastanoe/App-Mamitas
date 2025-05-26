@@ -21,8 +21,14 @@
 
     <style name="MyButton" parent="Widget.MaterialComponents.Button">
         <item name="android:backgroundTint">#FF56ABEC</item>
-        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:fontFamily">@font/outfit</item>
         <item name="android:textAllCaps">false</item>
     </style>
+
+    <style name="AlertDialogCustom" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <item name="android:textColorPrimary">@android:color/black</item> <!-- Cambiá si usás fondo oscuro -->
+        <item name="android:background">?attr/colorSurface</item>
+    </style>
+
 </resources>

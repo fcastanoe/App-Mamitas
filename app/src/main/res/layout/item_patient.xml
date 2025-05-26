@@ -16,8 +16,9 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:paddingVertical="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <!-- Icono de carpeta -->
         <ImageView
@@ -36,7 +37,7 @@
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="Nombre Apellido"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textColor="@android:color/white"/>
 
         <!-- Tres puntos (overflow) -->
@@ -44,6 +45,8 @@
             android:id="@+id/btnOptions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"
             android:contentDescription="Más opciones"
             android:src="@drawable/ic_more_vert"
             app:tint="@android:color/white"

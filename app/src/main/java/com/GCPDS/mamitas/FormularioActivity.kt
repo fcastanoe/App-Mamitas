@@ -76,7 +76,7 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
             },
             onOptionsClick = { patient ->
                 // Muestra diálogo con Info, Modificar y Eliminar
-                AlertDialog.Builder(this)
+                AlertDialog.Builder(this, R.style.AlertDialogCustom)
                     .setTitle("Paciente: ${patient.first} ${patient.last}")
                     .setMessage(
                         "Edad: ${patient.age}\n" +
@@ -84,7 +84,7 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                                 "Estatura: ${patient.height} cm"
                     )
                     .setPositiveButton("OK", null)
-                    .setNeutralButton("Modificar") { _, _ ->
+                    .setNeutralButton("Edit") { _, _ ->
                         // Lanzar NewPatientActivity para editar
                         Intent(this, NewPatientActivity::class.java).also {
                             it.putExtra("editPatient", patient)
@@ -92,7 +92,7 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                             startActivityForResult(it, REQUEST_EDIT_PATIENT)
                         }
                     }
-                        .setNegativeButton("Eliminar") { _, _ ->
+                        .setNegativeButton("Delete") { _, _ ->
                             // Borrar carpeta y prefs
                             val fname = "${patient.first}_${patient.last}"
                             File(filesDir, fname).deleteRecursively()

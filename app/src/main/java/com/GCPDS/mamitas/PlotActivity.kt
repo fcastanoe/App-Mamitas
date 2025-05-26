@@ -152,6 +152,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val baseDir = File(filesDir, patientFolder)
         val tempsDir = File(baseDir, "Temperaturas").apply { if (!exists()) mkdirs() }
         val imgsDir  = File(baseDir, "Imagenes").apply { if (!exists()) mkdirs() }
+        val regsDir      = File(baseDir, "Registros").apply    { if (!exists()) mkdirs() }
         val graphDir = File(baseDir, "Grafica").apply { if (!exists()) mkdirs() }
 
         // 2) Determinar siguiente índice tN (ej: t0, t1, ...)
@@ -161,6 +162,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // 3) Crear subcarpetas tN en Temps e Imgs
         val tTemps = File(tempsDir, tDirName).apply { mkdirs() }
         val tImgs  = File(imgsDir,  tDirName).apply { mkdirs() }
+        val tRegs        = File(regsDir,     tDirName).apply { mkdirs() }
         // NO creamos subdir en graphDir (quedará solo Grafica/)
 
         // 4) Guardar datos de temperaturas
@@ -170,10 +172,18 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // 5) Guardar imagen ploteada
         //    Asumimos que en PlotActivity tienes la ruta de la imagen overlay o similares
-        val imgPath = intent.getStringExtra("dermContourPath")
-            ?: intent.getStringExtra("dermContourPath")
+
+        val imgPath = intent.getStringExtra("dermColoredPath")
+            ?: intent.getStringExtra("dermColoredPath")
         imgPath?.let {
             val dest = File(tImgs, "image.png")
+            File(it).copyTo(dest, overwrite = true)
+            Log.d("PlotActivity", "Copiada imagen en: ${dest.absolutePath}")
+        }
+        val dermPath = intent.getStringExtra("dermContourPath")
+            ?: intent.getStringExtra("dermContourPath")
+        dermPath?.let {
+            val dest = File(tRegs, "registro.png")
             File(it).copyTo(dest, overwrite = true)
             Log.d("PlotActivity", "Copiada imagen en: ${dest.absolutePath}")
         }
