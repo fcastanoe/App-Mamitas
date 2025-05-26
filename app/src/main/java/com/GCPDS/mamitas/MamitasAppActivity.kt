@@ -28,9 +28,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
 import android.view.MenuItem
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import com.GCPDS.mamitas.databinding.ActivityMamitasAppBinding
 import com.google.android.material.navigation.NavigationView

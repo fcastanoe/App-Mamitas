@@ -6,13 +6,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Contenido principal con Toolbar + resto -->
+    <!-- CONTENIDO PRINCIPAL -->
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Toolbar arriba -->
+        <!-- TOOLBAR -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -21,15 +21,13 @@
             app:title="Análisis de Dermatomas"
             app:titleCentered="true"
             app:navigationIcon="@drawable/ic_menu"
-            app:titleTextAppearance="@style/Toolbar.Title"
             app:menu="@menu/toolbar_menu"/>
 
-        <!-- Frame con fondo e interfaz actual -->
+        <!-- FONDO SEMITRANSPARENTE -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Imagen de fondo semitransparente -->
             <ImageView
                 android:id="@+id/bg_image"
                 android:layout_width="match_parent"
@@ -38,107 +36,95 @@
                 android:scaleType="centerCrop"
                 android:alpha="0.6"/>
 
-            <!-- Tu ConstraintLayout original -->
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <!-- NUEVO CONTENIDO -->
+            <LinearLayout
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="16dp">
 
-                <!-- Botón Seleccionar Imagen -->
+                <!-- 1) Botón Seleccionar Imagen centrado -->
                 <Button
                     android:id="@+id/btnSelectImage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Seleccionar Imagen"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="16dp" />
+                    android:layout_gravity="center_horizontal"/>
 
-                <!-- Imagen seleccionada -->
+                <!-- 2) PhotoView (zoomable) ocupa la mitad de la pantalla -->
                 <com.github.chrisbanes.photoview.PhotoView
                     android:id="@+id/imgSelected"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:adjustViewBounds="true"
                     android:scaleType="centerInside"
-                    app:layout_constraintTop_toBottomOf="@id/btnSelectImage"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintDimensionRatio="H,16:9"
+                    android:visibility="visible"
                     android:layout_marginTop="16dp"/>
 
-                <!-- TextViews y botones auxiliares (idénticos) -->
-                <TextView
-                    android:id="@+id/tvMaxTemp"
-                    android:layout_width="wrap_content"
+                <!-- 3) Contenedor de resultados y acciones -->
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Max: --"
-                    android:textSize="18sp"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/imgSelected"
-                    app:layout_constraintStart_toStartOf="parent"
-                    android:layout_marginTop="16dp"/>
+                    android:layout_marginTop="16dp">
 
-                <TextView
-                    android:id="@+id/tvMinTemp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Min: --"
-                    android:textSize="18sp"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/tvMaxTemp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    android:layout_marginTop="8dp"/>
+                    <TextView
+                        android:id="@+id/tvMaxTemp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Max: --"
+                        android:textSize="18sp"
+                        android:visibility="gone"/>
 
-                <TextView
-                    android:id="@+id/tvMessage"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textColor="@android:color/holo_red_dark"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/tvMinTemp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="8dp"/>
+                    <TextView
+                        android:id="@+id/tvMinTemp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Min: --"
+                        android:textSize="18sp"
+                        android:visibility="gone"
+                        android:layout_marginTop="8dp"/>
 
-                <Button
-                    android:id="@+id/btnModifyManual"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Modificar manualmente"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/tvMessage"
-                    app:layout_constraintStart_toStartOf="parent"
-                    android:layout_marginTop="16dp"/>
+                    <TextView
+                        android:id="@+id/tvMessage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textColor="@android:color/holo_red_dark"
+                        android:visibility="gone"
+                        android:layout_marginTop="8dp"/>
 
-                <Button
-                    android:id="@+id/btnStart"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Start"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/btnModifyManual"
-                    app:layout_constraintStart_toStartOf="parent"
-                    android:layout_marginTop="8dp"/>
+                    <Button
+                        android:id="@+id/btnModifyManual"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Modificar manualmente"
+                        android:visibility="gone"
+                        android:layout_marginTop="8dp"/>
 
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
+                    <Button
+                        android:id="@+id/btnStart"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Start"
+                        android:visibility="gone"
+                        android:layout_marginTop="8dp"/>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        style="?android:attr/progressBarStyleLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="16dp"/>
+                </LinearLayout>
+            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 
-    <!-- Navigation Drawer -->
+    <!-- DRAWER LATERAL -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="300dp"
@@ -149,5 +135,4 @@
         app:itemIconTint="@android:color/white"
         app:itemTextColor="@android:color/white"
         app:menu="@menu/drawer_menu"/>
-
 </androidx.drawerlayout.widget.DrawerLayout>

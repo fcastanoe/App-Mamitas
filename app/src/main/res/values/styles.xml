@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">#56ABEC</item>
-        <item name="colorPrimaryDark">#5680E8</item>
-        <item name="colorAccent">#CF56ABEC</item>
+        <item name="colorPrimary">#FF56ABEC</item>
+        <item name="colorPrimaryDark">#FF5680E8</item>
+        <item name="colorAccent">#FF56ABEC</item>
         <item name="materialButtonStyle">@style/MyButton</item>
     </style>
 
@@ -20,8 +20,8 @@
     </style>
 
     <style name="MyButton" parent="Widget.MaterialComponents.Button">
-        <item name="android:backgroundTint">#8056ABEC</item>
-        <item name="android:textColor">#888888</item>
+        <item name="android:backgroundTint">#FF56ABEC</item>
+        <item name="android:textColor">#FFFFFF</item>
         <item name="android:fontFamily">@font/outfit</item>
         <item name="android:textAllCaps">false</item>
     </style>
