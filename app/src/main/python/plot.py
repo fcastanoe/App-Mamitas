@@ -298,7 +298,7 @@ def run_plot(image_path, files_dir, max_temp_str, min_temp_str):
         right_t,
         temps_right,
         temps_left,
-        mn, mx,
+        15.0, 38.0,
         colored_path
     )
 

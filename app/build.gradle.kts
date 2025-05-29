@@ -67,6 +67,7 @@ chaquopy {
             install("pandas")
             install("numpy")
             install("scipy")
+            install("imageio")
             // Puedes agregar más dependencias necesarias (por ejemplo, ultralytics o kagglehub),
             // pero ten en cuenta que podrían tener limitaciones en Android.
         }
