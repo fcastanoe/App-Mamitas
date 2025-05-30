@@ -61,7 +61,7 @@ class FileBrowserActivity : AppCompatActivity() {
                             val entries = obj.keys().asSequence()
                                 .map { key -> "$key: ${"%.2f".format(obj.getDouble(key))} °C" }
                                 .toList()
-                            AlertDialog.Builder(this)
+                            AlertDialog.Builder(this, R.style.AlertDialogCustom)
                                 .setTitle("Temperaturas")
                                 .setItems(entries.toTypedArray(), null)
                                 .setPositiveButton("OK", null)

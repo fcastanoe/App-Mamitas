@@ -27,8 +27,8 @@
     </style>
 
     <style name="AlertDialogCustom" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
-        <item name="android:textColorPrimary">@android:color/black</item> <!-- Cambiá si usás fondo oscuro -->
-        <item name="android:background">?attr/colorSurface</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:background">@android:color/white</item>
     </style>
 
 </resources>
