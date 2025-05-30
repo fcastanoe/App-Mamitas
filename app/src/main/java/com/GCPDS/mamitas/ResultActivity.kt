@@ -8,7 +8,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
-import kotlin.toString
 
 class ResultActivity : AppCompatActivity() {
 

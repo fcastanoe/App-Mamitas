@@ -97,7 +97,7 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         patientDirs.add("Crear nuevo paciente")
 
         // 2) Creamos el diálogo
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.AlertDialogCustom)
             .setTitle("Selecciona paciente")
             .setItems(patientDirs.toTypedArray()) { dialog, which ->
                 val choice = patientDirs[which]

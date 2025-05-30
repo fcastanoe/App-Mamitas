@@ -6,7 +6,6 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.Legend
 import java.io.File
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData

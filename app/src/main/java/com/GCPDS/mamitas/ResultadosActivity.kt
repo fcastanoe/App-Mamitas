@@ -16,7 +16,6 @@ import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 import com.chaquo.python.Python
 import com.github.chrisbanes.photoview.PhotoView
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.chaquo.python.android.AndroidPlatform
 import com.bumptech.glide.request.RequestListener
@@ -77,7 +76,7 @@ class ResultadosActivity : AppCompatActivity(),
             val patientDirs = prefs.getStringSet("patients", emptySet())!!
                 .toMutableList().apply { add("Cancelar") }
 
-            AlertDialog.Builder(this)
+            AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 .setTitle("Selecciona paciente")
                 .setItems(patientDirs.toTypedArray()) { dialog, which ->
                     val choice = patientDirs[which]
@@ -100,35 +99,66 @@ class ResultadosActivity : AppCompatActivity(),
             .callAttr("make_gif", patientPath)
             .toString()
 
+        // Carga con Glide como GIF
         Glide.with(this)
             .asGif()
             .load(File(gifPath))
             .listener(object : RequestListener<GifDrawable> {
                 override fun onResourceReady(
-                    resource: GifDrawable, model: Any?,
-                    target: Target<GifDrawable>?, dataSource: com.bumptech.glide.load.DataSource?,
+                    resource: GifDrawable,
+                    model: Any?,
+                    target: Target<GifDrawable>?,
+                    dataSource: com.bumptech.glide.load.DataSource?,
                     isFirstResource: Boolean
                 ): Boolean {
+                    // 1) Reproducir sólo 1 vez
                     resource.setLoopCount(1)
+                    // 2) Cuando termine, detener en el último frame
                     resource.registerAnimationCallback(object : Animatable2Compat.AnimationCallback() {
                         override fun onAnimationEnd(drawable: Drawable?) {
                             resource.stop()
                         }
                     })
-                    return false
+                    return false  // dejamos que Glide ponga el drawable en el ImageView
                 }
                 override fun onLoadFailed(
-                    e: GlideException?, model: Any?, target: Target<GifDrawable>?, isFirstResource: Boolean
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<GifDrawable>?,
+                    isFirstResource: Boolean
                 ) = false
             })
             .into(ivGif)
 
+        // Al hacer click, recargar exactamente igual para reiniciar la animación
         ivGif.setOnClickListener {
-            // recarga para repetir
             Glide.with(this)
                 .asGif()
                 .load(File(gifPath))
                 .apply(RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE))
+                .listener(object : RequestListener<GifDrawable> {
+                    override fun onResourceReady(
+                        resource: GifDrawable,
+                        model: Any?,
+                        target: Target<GifDrawable>?,
+                        dataSource: com.bumptech.glide.load.DataSource?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        resource.setLoopCount(1)
+                        resource.registerAnimationCallback(object : Animatable2Compat.AnimationCallback() {
+                            override fun onAnimationEnd(drawable: Drawable?) {
+                                resource.stop()
+                            }
+                        })
+                        return false
+                    }
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<GifDrawable>?,
+                        isFirstResource: Boolean
+                    ) = false
+                })
                 .into(ivGif)
         }
     }
@@ -212,7 +242,7 @@ class ResultadosActivity : AppCompatActivity(),
             R.id.nav_formulario  -> startActivity(Intent(this, FormularioActivity::class.java))
             R.id.nav_imagenes    -> startActivity(Intent(this, MamitasAppActivity::class.java))
             R.id.nav_basededatos -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
-            // nav_resultados ya estás aquí
+            R.id.nav_resultados  -> { /* ya estás */ }
         }
         findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer_layout)
             .closeDrawers()

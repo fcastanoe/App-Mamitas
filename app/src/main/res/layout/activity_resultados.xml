@@ -17,11 +17,10 @@
             android:id="@+id/toolbarResultados"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:navigationIcon="@drawable/ic_menu"
+            android:background="#CF56ABEC"
             app:title="Resultados"
             app:titleCentered="true"
-            app:titleTextAppearance="@style/Toolbar.Title"
+            app:navigationIcon="@drawable/ic_menu"
             app:menu="@menu/toolbar_menu"/>
 
         <!-- Fondo + contenido -->
@@ -48,10 +47,11 @@
                 <!-- 1) Botón de paciente -->
                 <Button
                     android:id="@+id/btnSelectPaciente"
-                    style="@style/MyButton"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Seleccionar paciente"/>
+                    android:text="Seleccionar paciente"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="24dp"/>
 
                 <!-- 2) GIF animado -->
                 <com.github.chrisbanes.photoview.PhotoView

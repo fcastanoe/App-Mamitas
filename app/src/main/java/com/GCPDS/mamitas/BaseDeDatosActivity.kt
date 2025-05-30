@@ -32,10 +32,13 @@ class BaseDeDatosActivity : AppCompatActivity(),
         toggle.syncState()
         navView.setNavigationItemSelectedListener(this)
 
-        // 2) Listar “assets/Database” → “Caso_1” … “Caso_30”
-        val assetMgr   = assets
-        val cases      = assetMgr.list("Database")?.toList()
-            ?: emptyList()   // debería devolver ["Caso_1","Caso_2",…,"Caso_30"]
+        // 2) Listar “assets/Database” y ordenar naturalmente
+        val assetMgr = assets
+        val rawCases = assetMgr.list("Database")?.toList() ?: emptyList()
+        val cases = rawCases.sortedWith(compareBy { name ->
+            // extrae el número tras "Caso_" y lo convierte a Int
+            name.substringAfterLast(' ').toIntOrNull() ?: Int.MAX_VALUE
+        })
 
         // 3) RecyclerView con AssetAdapter
         val rvCases = findViewById<RecyclerView>(R.id.rvCases)

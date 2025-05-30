@@ -379,6 +379,47 @@ class MamitasAppActivity: AppCompatActivity(),
         }
     }
 
+    private fun normalizeMin(valStr: String): String {
+        // Si viene entre 5.1 y 9.9 y tiene decimal, le anteponemos un '1'
+        val f = valStr.toFloatOrNull()
+        if (f != null && f > 5f && f < 10f && f != f.toInt().toFloat()) {
+            return "1$valStr"
+        }
+
+        // Quitamos cualquier punto o carácter no numérico
+        val s = valStr.filter { it.isDigit() }
+        if (s.length == 2 && (s.toIntOrNull() ?: 0) > 40) {
+            // p. ej. "95" -> "195" -> "19.5"
+            val three = "1$s"
+            return "${three.substring(0,2)}.${three.substring(2)}"
+        }
+        if (s.length == 3) {
+            // p. ej. "198" -> "19.8"
+            return "${s.substring(0,2)}.${s.substring(2)}"
+        }
+        return valStr
+    }
+
+    private fun normalizeMax(valStr: String): String {
+        // Si viene entre 0.1 y 9.9, le anteponemos un '3'
+        val f = valStr.toFloatOrNull()
+        if (f != null && f in 0.1f..9.9f) {
+            return "3$valStr"
+        }
+
+        val s = valStr.filter { it.isDigit() }
+        if (s.length == 2) {
+            // p. ej. "23" -> "323" -> "32.3"
+            val three = "3$s"
+            return "${three.substring(0,2)}.${three.substring(2)}"
+        }
+        if (s.length == 3) {
+            // p. ej. "323" -> "32.3"
+            return "${s.substring(0,2)}.${s.substring(2)}"
+        }
+        return valStr
+    }
+
 
     fun performOCROnImage(imagePath: String): Pair<String, String> {
         // Crea una instancia de TessBaseAPI
@@ -411,8 +452,11 @@ class MamitasAppActivity: AppCompatActivity(),
         // Esto debes ajustarlo según el formato de tu imagen.
         val regex = Regex("""\d+(?:\.\d+)?""")
         val matches = regex.findAll(recognizedText).map { it.value }.toList()
-        val maxTemp = if (matches.isNotEmpty()) matches[0] else ""
-        val minTemp = if (matches.size >= 2) matches[1] else ""
+        val maxTempRaw = if (matches.isNotEmpty()) matches[0] else ""
+        val minTempRaw = if (matches.size >= 2) matches[1] else ""
+
+        val maxTemp = normalizeMax(maxTempRaw)
+        val minTemp = normalizeMin(minTempRaw)
 
         return Pair(maxTemp, minTemp)
     }

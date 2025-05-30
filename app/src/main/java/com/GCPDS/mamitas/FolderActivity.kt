@@ -54,13 +54,12 @@ class FolderActivity : AppCompatActivity() {
         toolbar.setOnMenuItemClickListener { item ->
             if (item.itemId == R.id.action_details) {
                 // Muestra detalles idénticos al dialog de FormularioActivity
-                AlertDialog.Builder(this)
+                AlertDialog.Builder(this, R.style.AlertDialogCustom)
                     .setTitle("Detalles de paciente")
-                    .setMessage(
-                        "Nombre: ${patient.first} ${patient.last}\n" +
+                    .setMessage("Nombre: ${patient.first} ${patient.last}\n" +
                                 "Edad: ${patient.age}\n" +
-                                "Peso: ${patient.weight}\n" +
-                                "Estatura: ${patient.height}"
+                                "Peso: ${patient.weight} Kg\n" +
+                                "Estatura: ${patient.height} cm"
                     )
                     .setPositiveButton("OK", null)
                     .show()

@@ -78,9 +78,8 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                 // Muestra diálogo con Info, Modificar y Eliminar
                 AlertDialog.Builder(this, R.style.AlertDialogCustom)
                     .setTitle("Paciente: ${patient.first} ${patient.last}")
-                    .setMessage(
-                        "Edad: ${patient.age}\n" +
-                                "Peso: ${patient.weight} kg\n" +
+                    .setMessage("Edad: ${patient.age}\n" +
+                                "Peso: ${patient.weight} Kg\n" +
                                 "Estatura: ${patient.height} cm"
                     )
                     .setPositiveButton("OK", null)
@@ -124,7 +123,7 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.nav_inicio      -> { /* quizás recreate() aquí */ }
+            R.id.nav_inicio      -> startActivity(Intent(this, MainActivity::class.java))
             R.id.nav_formulario  -> { /* ya estás */ }
             R.id.nav_imagenes    -> startActivity(Intent(this, MamitasAppActivity::class.java))
             R.id.nav_resultados  -> startActivity(Intent(this, ResultadosActivity::class.java))

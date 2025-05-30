@@ -46,8 +46,3 @@ def process_image_wrapper(image_path):
     max_temp, min_temp = ocr_range_t(image_path)
     return {"max_temp": max_temp, "min_temp": min_temp}
 
-# Para pruebas locales, puedes descomentar:
-# if __name__ == "__main__":
-#     image_path = "ruta_a_tu_imagen.jpg"
-#     resultados = process_image_wrapper(image_path)
-#     print(resultados)
