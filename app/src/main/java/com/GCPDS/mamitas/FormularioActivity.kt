@@ -84,12 +84,13 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                     )
                     .setPositiveButton("OK", null)
                     .setNeutralButton("Edit") { _, _ ->
-                        // Lanzar NewPatientActivity para editar
-                        Intent(this, NewPatientActivity::class.java).also {
-                            it.putExtra("editPatient", patient)
-                        }.let {
-                            startActivityForResult(it, REQUEST_EDIT_PATIENT)
+                        // Cuando pulso Edit, envío también el nombre de carpeta original
+                        val originalFolder = "${patient.first}_${patient.last}"
+                        val intent = Intent(this, NewPatientActivity::class.java).apply {
+                            putExtra("editPatient", patient)
+                            putExtra("originalFolderName", originalFolder)
                         }
+                            startActivityForResult(intent, REQUEST_EDIT_PATIENT)
                     }
                         .setNegativeButton("Delete") { _, _ ->
                             // Borrar carpeta y prefs
@@ -137,28 +138,79 @@ class FormularioActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
         super.onActivityResult(requestCode, resultCode, data)
         if ((requestCode == REQUEST_NEW_PATIENT || requestCode == REQUEST_EDIT_PATIENT)
             && resultCode == RESULT_OK && data != null) {
+
             val patient = data.getParcelableExtra<Patient>("newPatient")
             patient?.let {
-                // Crea carpeta física
-                val folderName = "${it.first}_${it.last}"
-                File(filesDir, folderName).apply { if (!exists()) mkdirs() }
+                // Carpeta “nueva” que queremos tenga: First_Last
+                val newFolderName = "${it.first}_${it.last}"
 
-                // ADD: guardar en prefs
-                val set = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
-                set.add(folderName)
+                // Si vino de un EDIT, data tendrá "originalFolderName"
+                val originalFolderName = data.getStringExtra("originalFolderName")
+
+                if (requestCode == REQUEST_EDIT_PATIENT && originalFolderName != null) {
+                    // Caso RENOMBRADO: mover (rename) carpeta antigua → nueva
+                    if (originalFolderName != newFolderName) {
+                        val oldDir = File(filesDir, originalFolderName)
+                        val newDir = File(filesDir, newFolderName)
+                        if (oldDir.exists()) {
+                            // 1) Intentamos renombrar (mover) la carpeta física
+                            val moved = oldDir.renameTo(newDir)
+                            if (!moved) {
+                                // Si falla el renameTo (p. ej. en algunos dispositivos), podemos hacer copy + delete
+                                oldDir.copyRecursively(newDir, overwrite = true)
+                                oldDir.deleteRecursively()
+                            }
+                        }
+                        // 2) Actualizamos SharedPreferences: quitamos la entrada antigua
+                        val setOld = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
+                        setOld.remove(originalFolderName)
+                        prefs.edit()
+                            .putStringSet("patients", setOld)
+                            .remove("patient_$originalFolderName")
+                            .apply()
+
+                        // 3) En la lista `patients`, buscar índice del Patient con la carpeta antigua
+                        val oldIndex = patients.indexOfFirst { p ->
+                            "${p.first}_${p.last}" == originalFolderName
+                        }
+                        if (oldIndex >= 0) {
+                            // elimina el paciente antiguo de la lista y notifica al adapter
+                            patients.removeAt(oldIndex)
+                            rvPatients.adapter?.notifyItemRemoved(oldIndex)
+                        }
+                        // (no hace falta volver a borrar subcarpetas: ya están dentro de newDir)
+                    }
+                }
+
+                // Ahora procedo a “guardar/actualizar” como si fuera nuevo
+                // (si renombré, la lista ya eliminó al viejo, así que aquí simplemente lo añado;
+                //  si NO renombré, quizá ya exista en la lista: en ese caso lo sobreescribo en su posición)
+
+                // Asegurarme de que existe la carpeta nueva
+                File(filesDir, newFolderName).apply { if (!exists()) mkdirs() }
+
+                // Guardo o actualizo prefs con la carpeta nueva
+                val set2 = prefs.getStringSet("patients", emptySet())!!.toMutableSet()
+                set2.add(newFolderName)
                 prefs.edit()
-                    .putStringSet("patients", set)
-                    .putString("patient_$folderName", gson.toJson(it))
+                    .putStringSet("patients", set2)
+                    .putString("patient_$newFolderName", gson.toJson(it))
                     .apply()
 
-                // Añade a la lista y notifica
-                val idx = patients.indexOfFirst { p ->
-                    "${p.first}_${p.last}" == folderName
+                // Refrescar lista en RecyclerView:
+                // - Si ya existía (por edad/peso/estatura), reemplazo en el mismo índice
+                // - Si no existía (o se renombró, o es creación), lo añado al final
+
+                // Intento hallar índice basándome en carpeta “nueva”
+                val newIndex = patients.indexOfFirst { p ->
+                    "${p.first}_${p.last}" == newFolderName
                 }
-                if (idx >= 0) {
-                    patients[idx] = it
-                    rvPatients.adapter?.notifyItemChanged(idx)
+                if (newIndex >= 0) {
+                    // Ya existía (cambios en edad/peso/estatura); actualizo
+                    patients[newIndex] = it
+                    rvPatients.adapter?.notifyItemChanged(newIndex)
                 } else {
+                    // No existía: lo agrego como nuevo al final
                     patients.add(it)
                     rvPatients.adapter?.notifyItemInserted(patients.size - 1)
                 }

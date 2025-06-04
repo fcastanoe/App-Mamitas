@@ -19,6 +19,16 @@ class NewPatientActivity : AppCompatActivity() {
         val etH = findViewById<EditText>(R.id.etHeight)
         val btn = findViewById<Button>(R.id.btnConfirm)
 
+        val existing = intent.getParcelableExtra<Patient>("editPatient")
+
+        if (existing != null) {
+            etF.setText(existing.first)
+            etL.setText(existing.last)
+            etAge.setText(existing.age.toString())
+            etW.setText(existing.weight.toString())
+            etH.setText(existing.height.toString())
+        }
+
         btn.setOnClickListener {
             val first = etF.text.toString().trim()
             val last  = etL.text.toString().trim()
@@ -32,7 +42,14 @@ class NewPatientActivity : AppCompatActivity() {
                 etW.text.toString().toFloatOrNull() ?: 0f,
                 etH.text.toString().toFloatOrNull() ?: 0f
             )
+
+            // Recupero el nombre de carpeta original que me pasó FormularioActivity (si viene)
+            val originalFolder = intent.getStringExtra("originalFolderName")
+
             val data = Intent().putExtra("newPatient", patient)
+            if (originalFolder != null) {
+                data.putExtra("originalFolderName", originalFolder)
+            }
             setResult(RESULT_OK, data)
             finish()
         }
