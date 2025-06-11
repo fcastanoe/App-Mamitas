@@ -8,6 +8,7 @@ from PIL import Image
 import matplotlib.colors as mcolors
 from matplotlib.colorbar import ColorbarBase
 import matplotlib.cm as cm
+from matplotlib.colors import ListedColormap
 
 def define_contour(dermatomes):
     without_contours = dermatomes.copy()
@@ -181,8 +182,8 @@ def make_both_feet_colored(
     """
 
     # 1) Colormap + muchos bins para mayor resolución
-    cmap = plt.get_cmap('coolwarm')
-    bins = np.linspace(mn, mx, 31)  # 100 niveles de color entre mn y mx
+    cmap = plt.get_cmap('hot')
+    bins = np.linspace(mn, mx, 50)  # niveles de color entre mn y mx
     norm = mcolors.BoundaryNorm(bins, ncolors=cmap.N, clip=True)
     sm   = cm.ScalarMappable(norm=norm, cmap=cmap)
 
@@ -215,6 +216,14 @@ def make_both_feet_colored(
         rgba = (np.array(sm.to_rgba(temp)) * 255).astype(np.uint8)
         right_col[mask] = rgba
 
+    contours_map = define_contour(tmpl.astype('float'))
+    uniques = sorted(np.unique(contours_map))[1:]
+
+    for u in uniques:
+        bin_mask = (contours_map == u).astype('uint8')
+        cnts, _  = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(right_col, cnts, -1, (0,0,0,255), 1)
+
     # 7) Pinto el pie izquierdo sobre left_col usando left_tmpl
     for name, temp in temps_left.items():
         lbl  = name2label[name]
@@ -222,16 +231,63 @@ def make_both_feet_colored(
         rgba = (np.array(sm.to_rgba(temp)) * 255).astype(np.uint8)
         left_col[mask] = rgba
 
-    # 8) Ahora sí, invierto horizontalmente SOLO el izquierdo
+    contours_map_left = define_contour(left_tmpl.astype('float'))
+    uniques_left = sorted(np.unique(contours_map_left))[1:]
+
+    for u in uniques_left:
+        bin_mask = (contours_map_left == u).astype('uint8')
+        cnts, _  = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(left_col, cnts, -1, (0,0,0,255), 1)
+
+    # 10) Anotar nombres, con rotación para algunas zonas
+    def annotate(ax, label_map, mapping, is_left: bool):
+        for name, lbl in mapping.items():
+            # coordenadas en la plantilla correcta (antes de invertir)
+            ref_map = left_tmpl if is_left else tmpl
+            bin_mask = (ref_map == lbl).astype('uint8')
+            cnts,_ = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not cnts: continue
+            pts = np.vstack(cnts).squeeze()
+            M = cv2.moments(pts)
+            if M['m00']==0: continue
+            cx = M['m10']/M['m00']
+            cy = M['m01']/M['m00']
+            # área para escalar fuente
+            area = M['m00']
+            font_size = max(8, min(20, int(np.sqrt(area)/5)))
+
+            # Si es una de las zonas largas, la rotamos
+            angle = 0
+            if any(s in name for s in ("Lateral", "Sural", "Saphenous")):
+                angle = 90
+
+            ax.text(
+                cx if not is_left else w - cx,  # corregir x para pie invertido
+                cy,
+                name,
+                color='black',
+                fontsize=font_size,
+                ha='center',
+                va='center',
+                rotation=angle,
+                weight='bold'
+            )
+
+    # 8) Ahora sí, invierto horizontalmente SOLO el derecho
     right_col = np.fliplr(right_col)
 
     # 9) Dibujo los dos pies y la barra de color
     fig, (ax_r, ax_l, ax_cb) = plt.subplots(
-        1, 3, figsize=(8, 4),
+        1, 3, figsize=(12, 6),
         gridspec_kw={'width_ratios':[1,1,0.2]}
     )
+
     ax_r.imshow(right_col); ax_r.axis('off')
     ax_l.imshow(left_col ); ax_l.axis('off')
+
+    # Anotar nombres
+    annotate(ax_r, tmpl, name2label, is_left=True)
+    annotate(ax_l, left_tmpl, name2label, is_left=False)
 
     cb = ColorbarBase(ax_cb, cmap=cmap, norm=norm, orientation='vertical')
     cb.set_label('Temperatura (°C)')
