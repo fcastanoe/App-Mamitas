@@ -239,11 +239,11 @@ def make_both_feet_colored(
         cnts, _  = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(left_col, cnts, -1, (0,0,0,255), 1)
 
-    # 10) Anotar nombres, con rotación para algunas zonas
+    # Anotar nombres, con rotación para algunas zonas
     def annotate(ax, label_map, mapping, is_left: bool):
         for name, lbl in mapping.items():
             # coordenadas en la plantilla correcta (antes de invertir)
-            ref_map = left_tmpl if is_left else tmpl
+            ref_map = tmpl if is_left else left_tmpl
             bin_mask = (ref_map == lbl).astype('uint8')
             cnts,_ = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             if not cnts: continue
@@ -273,8 +273,8 @@ def make_both_feet_colored(
                 weight='bold'
             )
 
-    # 8) Ahora sí, invierto horizontalmente SOLO el derecho
-    right_col = np.fliplr(right_col)
+    # 8) Ahora sí, invierto horizontalmente SOLO el izquierdo
+    left_col = np.fliplr(left_col)
 
     # 9) Dibujo los dos pies y la barra de color
     fig, (ax_r, ax_l, ax_cb) = plt.subplots(
@@ -282,12 +282,12 @@ def make_both_feet_colored(
         gridspec_kw={'width_ratios':[1,1,0.2]}
     )
 
-    ax_r.imshow(right_col); ax_r.axis('off')
-    ax_l.imshow(left_col ); ax_l.axis('off')
+    ax_l.imshow(right_col); ax_l.axis('off')
+    ax_r.imshow(left_col ); ax_r.axis('off')
 
     # Anotar nombres
-    annotate(ax_r, tmpl, name2label, is_left=True)
-    annotate(ax_l, left_tmpl, name2label, is_left=False)
+    annotate(ax_l, tmpl, name2label, is_left=False)
+    annotate(ax_r, left_tmpl, name2label, is_left=True)
 
     cb = ColorbarBase(ax_cb, cmap=cmap, norm=norm, orientation='vertical')
     cb.set_label('Temperatura (°C)')
