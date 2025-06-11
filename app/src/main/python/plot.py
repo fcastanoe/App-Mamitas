@@ -8,7 +8,7 @@ from PIL import Image
 import matplotlib.colors as mcolors
 from matplotlib.colorbar import ColorbarBase
 import matplotlib.cm as cm
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import LinearSegmentedColormap
 
 def define_contour(dermatomes):
     without_contours = dermatomes.copy()
@@ -66,40 +66,40 @@ def extract_feet(mask):
         mask = mask[:, :, 0]
     img = mask.astype('uint8')
     contours, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     if len(contours) == 0:
         return None, None, []
-    
+
     contours = list(contours)
     # Ordenamos de mayor a menor según el área
     contours.sort(reverse=True, key=lambda c: cv2.contourArea(c))
-    
+
     coord = []
     # Procesamos hasta dos contornos
     for c in contours[:2]:
-        yBot = c[c[:, :, 1].argmax()][0][1] 
-        xRig = c[c[:, :, 0].argmin()][0][0] 
-        yTop = c[c[:, :, 1].argmin()][0][1] 
-        xLef = c[c[:, :, 0].argmax()][0][0] 
+        yBot = c[c[:, :, 1].argmax()][0][1]
+        xRig = c[c[:, :, 0].argmin()][0][0]
+        yTop = c[c[:, :, 1].argmin()][0][1]
+        xLef = c[c[:, :, 0].argmax()][0][0]
         coord.append([yTop, yBot, xRig, xLef, c])
-    
+
     # Si solo se detectó un contorno, usar ese para el pie derecho y dejar el izquierdo en None
     if len(coord) == 1:
         right_foot = np.zeros_like(img)
         right_foot = cv2.drawContours(right_foot, [coord[0][-1]], -1, 1, -1)
         right_foot = right_foot[coord[0][0]:coord[0][1], coord[0][2]:coord[0][3]]
         return right_foot, None, coord
-    
+
     # Si se detectaron dos, ordenar por la coordenada x para asignar derecha e izquierda
     coord.sort(key=lambda x: x[2])
     right_foot = np.zeros_like(img)
     right_foot = cv2.drawContours(right_foot, [coord[0][-1]], -1, 1, -1)
     right_foot = right_foot[coord[0][0]:coord[0][1], coord[0][2]:coord[0][3]]
-    
+
     left_foot = np.zeros_like(img)
     left_foot = cv2.drawContours(left_foot, [coord[1][-1]], -1, 1, -1)
     left_foot = left_foot[coord[1][0]:coord[1][1], coord[1][2]:coord[1][3]]
-    
+
     return right_foot, left_foot, coord
 
 def get_dermatomes(fixed_mask, path_right_foot, path_left_foot):
@@ -119,10 +119,10 @@ def get_dermatomes(fixed_mask, path_right_foot, path_left_foot):
     if left_dermatomes is None:
         raise FileNotFoundError(f"Plantilla izquierda no encontrada: {path_left_foot}")
 
-    left_dermatomes[left_dermatomes != 0] = left_dermatomes[left_dermatomes != 0] + 1 
-    
+    left_dermatomes[left_dermatomes != 0] = left_dermatomes[left_dermatomes != 0] + 1
+
     right_foot, left_foot, coord = extract_feet(fixed_mask)
-    
+
     # Registrar dermatomas para el pie derecho
     if right_foot is not None:
         right_dermatomes_registered = register_one_foot(right_foot, right_dermatomes)
@@ -130,12 +130,12 @@ def get_dermatomes(fixed_mask, path_right_foot, path_left_foot):
         output_dermatomes[coord[0][0]:coord[0][1], coord[0][2]:coord[0][3]] = right_dermatomes_registered
     else:
         output_dermatomes = np.zeros_like(fixed_mask, dtype='float')
-    
+
     # Si se detectó también el pie izquierdo, registrarlo y sumarlo
     if left_foot is not None and len(coord) >= 2:
         left_dermatomes_registered = register_one_foot(left_foot, left_dermatomes)
         output_dermatomes[coord[1][0]:coord[1][1], coord[1][2]:coord[1][3]] += left_dermatomes_registered
-    
+
     output_dermatomes = define_contour(output_dermatomes)
     return output_dermatomes
 
@@ -182,7 +182,12 @@ def make_both_feet_colored(
     """
 
     # 1) Colormap + muchos bins para mayor resolución
-    cmap = plt.get_cmap('hot')
+
+    colors = [
+        '#0000FF',  # azul puro
+        '#FF0000'   # rojo puro
+    ]
+    cmap = LinearSegmentedColormap.from_list('BlueToRed', colors, N=256)
     bins = np.linspace(mn, mx, 50)  # niveles de color entre mn y mx
     norm = mcolors.BoundaryNorm(bins, ncolors=cmap.N, clip=True)
     sm   = cm.ScalarMappable(norm=norm, cmap=cmap)
@@ -254,7 +259,7 @@ def make_both_feet_colored(
             cy = M['m01']/M['m00']
             # área para escalar fuente
             area = M['m00']
-            font_size = max(8, min(20, int(np.sqrt(area)/5)))
+            font_size = max(12, min(36, int(np.sqrt(area)/4)))
 
             # Si es una de las zonas largas, la rotamos
             angle = 0
@@ -274,25 +279,52 @@ def make_both_feet_colored(
             )
 
     # 8) Ahora sí, invierto horizontalmente SOLO el izquierdo
-    left_col = np.fliplr(left_col)
+    right_col = np.fliplr(right_col)
 
     # 9) Dibujo los dos pies y la barra de color
     fig, (ax_r, ax_l, ax_cb) = plt.subplots(
-        1, 3, figsize=(12, 6),
+        1, 3, figsize=(12, 12),
         gridspec_kw={'width_ratios':[1,1,0.2]}
     )
 
-    ax_l.imshow(right_col); ax_l.axis('off')
-    ax_r.imshow(left_col ); ax_r.axis('off')
+    ax_r.imshow(right_col); ax_r.axis('off')
+    ax_l.imshow(left_col ); ax_l.axis('off')
 
     # Anotar nombres
-    annotate(ax_l, tmpl, name2label, is_left=False)
-    annotate(ax_r, left_tmpl, name2label, is_left=True)
+    annotate(
+        ax_r,
+        tmpl,
+        { name: name2label[name] for name in temps_right.keys() },
+        is_left=True
+    )
+    annotate(
+        ax_l,
+        left_tmpl,
+        { name: name2label[name] for name in temps_left.keys() },
+        is_left=False
+    )
 
     cb = ColorbarBase(ax_cb, cmap=cmap, norm=norm, orientation='vertical')
     cb.set_label('Temperatura (°C)')
     cb.set_ticks([mn, mx])
     cb.set_ticklabels([f"{mn:.1f}", f"{mx:.1f}"])
+
+    # ——— 1) Subir tamaño de texto de la colorbar ———
+    cb.ax.tick_params(labelsize=20)             # etiquetas de ticks
+    cb.ax.yaxis.label.set_size(22)              # etiqueta 'Temperatura (°C)'
+
+    # ——— 2) Dibujar un marco negro alrededor de los pies ———
+    for ax in (ax_r, ax_l):
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_edgecolor('black')
+            spine.set_linewidth(2)
+
+    # (Opcional) contornear la colorbar también:
+    for spine in ax_cb.spines.values():
+        spine.set_visible(True)
+        spine.set_edgecolor('black')
+        spine.set_linewidth(2)
 
     plt.tight_layout()
     fig.savefig(out_path, dpi=150)
@@ -354,7 +386,7 @@ def run_plot(image_path, files_dir, max_temp_str, min_temp_str):
         right_t,
         temps_right,
         temps_left,
-        15.0, 38.0,
+        24.0, 34.0,
         colored_path
     )
 
