@@ -20,6 +20,8 @@ import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
+import android.graphics.Typeface
+import android.graphics.Color
 
 class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -68,7 +70,9 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val tv = TextView(this).apply {
                     text = "$key: ${"%.2f".format(value)} °C"
                     textSize = 16f
+                    setTypeface(null, Typeface.BOLD)
                     setPadding(0,8,0,8)
+                    setBackgroundColor(Color.parseColor("#80FFFFFF"))
                 }
                 tempsCont.addView(tv)
             }

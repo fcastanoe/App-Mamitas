@@ -28,14 +28,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Imagen de fondo semitransparente -->
-            <ImageView
-                android:id="@+id/bg_image"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/captura"
-                android:scaleType="centerCrop"
-                android:alpha="0.6"/>
 
             <!-- Contenido sobre el fondo -->
             <LinearLayout
@@ -58,7 +50,7 @@
                     android:id="@+id/ivGif"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="2"
+                    android:layout_weight="3"
                     android:layout_marginTop="16dp"
                     android:adjustViewBounds="true"
                     android:scaleType="centerInside"/>
