@@ -23,6 +23,10 @@ import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
 import android.graphics.Typeface
 import android.graphics.Color
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.core.content.FileProvider
 import java.io.FileOutputStream
 
@@ -98,24 +102,46 @@ class PlotActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      *  - Opción “Crear nuevo paciente”
      */
     private fun showPatientPicker() {
-        // 1) Obtenemos carpetas de pacientes
+        // 1) Obtenemos carpetas de pacientes y añadimos al final la opción
         val patientDirs = prefs.getStringSet("patients", emptySet())!!
-                   .toMutableList()
+            .toMutableList()
         patientDirs.add("Crear nuevo paciente")
 
-        // 2) Creamos el diálogo
+        // 2) Creamos un ArrayAdapter personalizado
+        val adapter = object : ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_list_item_1,
+            patientDirs
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent) as TextView
+
+                if (position == patientDirs.size - 1) {
+                    // Sólo para “Crear nuevo paciente”
+                    view.gravity = Gravity.CENTER
+                    view.setBackgroundColor(Color.parseColor("#FF2196F3")) // azul Material
+                    view.setTextColor(Color.WHITE)
+                } else {
+                    // Restablecemos estilo por defecto para los demás
+                    view.gravity = Gravity.START
+                    view.setBackgroundColor(Color.TRANSPARENT)
+                    view.setTextColor(Color.BLACK)
+                }
+                return view
+            }
+        }
+
+        // 3) Usamos setAdapter en lugar de setItems
         AlertDialog.Builder(this, R.style.AlertDialogCustom)
             .setTitle("Selecciona paciente")
-            .setItems(patientDirs.toTypedArray()) { dialog, which ->
+            .setAdapter(adapter) { dialog, which ->
                 val choice = patientDirs[which]
                 if (choice == "Crear nuevo paciente") {
-                    // Lanzamos NewPatientActivity
                     startActivityForResult(
                         Intent(this, NewPatientActivity::class.java),
                         REQUEST_NEW_PATIENT_SAVE
                     )
                 } else {
-                    // Directamente guardamos en el paciente elegido
                     saveToPatient(choice)
                 }
             }
