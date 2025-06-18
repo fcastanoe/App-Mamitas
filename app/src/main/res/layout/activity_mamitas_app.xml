@@ -75,6 +75,9 @@
                         android:layout_height="wrap_content"
                         android:text="Max: --"
                         android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/black"
+                        android:background="#70FFFFFF"
                         android:visibility="gone"/>
 
                     <TextView
@@ -83,6 +86,9 @@
                         android:layout_height="wrap_content"
                         android:text="Min: --"
                         android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/black"
+                        android:background="#70FFFFFF"
                         android:visibility="gone"
                         android:layout_marginTop="8dp"/>
 
@@ -91,7 +97,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="16sp"
+                        android:textStyle="bold"
                         android:textColor="@android:color/holo_red_dark"
+                        android:background="#70FFFFFF"
                         android:visibility="gone"
                         android:layout_marginTop="8dp"/>
 

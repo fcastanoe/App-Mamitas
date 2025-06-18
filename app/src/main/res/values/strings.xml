@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Mamitas</string>
+    <string name="app_name">ThermoMater AI</string>
     <string name="navigation_drawer_open">Abrir menú de navegación</string>
     <string name="navigation_drawer_close">Cerrar menú de navegación</string>
     <string name="desc_scroll_plots">Carrusel de resultados de dermatomas</string>
