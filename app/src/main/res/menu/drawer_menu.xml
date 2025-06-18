@@ -26,4 +26,9 @@
         android:icon="@drawable/ic_card_travel"
         android:title="Base de Datos" />
 
+    <item
+        android:id="@+id/nav_descargar_manual"
+        android:icon="@drawable/ic_download"
+        android:title="Descargar Manual" />
+
 </menu>

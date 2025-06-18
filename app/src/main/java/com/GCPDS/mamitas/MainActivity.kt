@@ -7,6 +7,11 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import com.GCPDS.mamitas.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
+import android.widget.Toast
+import android.content.ActivityNotFoundException
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
@@ -74,6 +79,7 @@ class MainActivity : AppCompatActivity(),
             R.id.nav_imagenes   -> startActivity(Intent(this, MamitasAppActivity::class.java))
             R.id.nav_resultados  -> startActivity(Intent(this, ResultadosActivity::class.java))
             R.id.nav_basededatos -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
+            R.id.nav_descargar_manual -> mostrarManualPDF()
         }
         binding.drawerLayout.closeDrawers()
         return true
@@ -85,6 +91,37 @@ class MainActivity : AppCompatActivity(),
             binding.drawerLayout.closeDrawers()
         } else {
             super.onBackPressed()
+        }
+    }
+
+    private fun mostrarManualPDF() {
+        // 1. Copiar el PDF de res/raw a cache
+        val input = resources.openRawResource(R.raw.manual)
+        val outFile = File(cacheDir, "manual.pdf")
+        FileOutputStream(outFile).use { it.write(input.readBytes()) }
+
+        // 2. Obtener URI protegido
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${packageName}.fileprovider",
+            outFile
+        )
+
+        // 3. Construir Intent de visualización mediante chooser
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val chooser = Intent.createChooser(viewIntent, "Abrir Manual PDF")
+
+        // 4. Lanzar con manejo de excepción
+        try {
+            startActivity(chooser)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this,
+                "No se encontró ninguna app para abrir PDF. Instala un lector de PDF.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

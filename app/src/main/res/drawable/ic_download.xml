@@ -5,35 +5,30 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <!-- Contorno del formulario -->
+    <!-- Flecha vertical: el tallo de la descarga -->
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
+        android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M3,3 H21 V21 H3 Z"/>
+        android:pathData="M12,3 v10" />
 
-    <!-- Línea del campo superior -->
+    <!-- Cabeza de la flecha (punta): forma la flecha descendente -->
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M5,7 H19"/>
+        android:strokeLineJoin="round"
+        android:pathData="M8,11 l4,4 l4,-4" />
 
-    <!-- Línea del campo intermedio -->
+    <!-- Línea base inferior: simboliza el contenedor o la "bandeja" de descarga -->
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M5,11 H19"/>
-
-    <!-- Línea del campo inferior -->
-    <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:pathData="M5,15 H19"/>
+        android:strokeLineJoin="round"
+        android:pathData="M5,21 h14" />
 </vector>

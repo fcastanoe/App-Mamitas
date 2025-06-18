@@ -1,5 +1,6 @@
 package com.GCPDS.mamitas
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -8,9 +9,11 @@ import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
@@ -32,6 +35,7 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 
 class ResultadosActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
@@ -243,9 +247,41 @@ class ResultadosActivity : AppCompatActivity(),
             R.id.nav_imagenes    -> startActivity(Intent(this, MamitasAppActivity::class.java))
             R.id.nav_basededatos -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
             R.id.nav_resultados  -> { /* ya estás */ }
+            R.id.nav_descargar_manual -> mostrarManualPDF()
         }
         findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer_layout)
             .closeDrawers()
         return true
+    }
+
+    private fun mostrarManualPDF() {
+        // 1. Copiar el PDF de res/raw a cache
+        val input = resources.openRawResource(R.raw.manual)
+        val outFile = File(cacheDir, "manual.pdf")
+        FileOutputStream(outFile).use { it.write(input.readBytes()) }
+
+        // 2. Obtener URI protegido
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${packageName}.fileprovider",
+            outFile
+        )
+
+        // 3. Construir Intent de visualización mediante chooser
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val chooser = Intent.createChooser(viewIntent, "Abrir Manual PDF")
+
+        // 4. Lanzar con manejo de excepción
+        try {
+            startActivity(chooser)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this,
+                "No se encontró ninguna app para abrir PDF. Instala un lector de PDF.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 }

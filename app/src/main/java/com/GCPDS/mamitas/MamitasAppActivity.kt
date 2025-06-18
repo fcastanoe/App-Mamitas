@@ -1,5 +1,6 @@
 package com.GCPDS.mamitas
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
@@ -29,6 +30,7 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.core.content.FileProvider
 import com.GCPDS.mamitas.databinding.ActivityMamitasAppBinding
 import com.google.android.material.navigation.NavigationView
 import java.io.FileInputStream
@@ -366,6 +368,7 @@ class MamitasAppActivity: AppCompatActivity(),
             R.id.nav_imagenes     -> { /* Ya estás aquí */ }
             R.id.nav_resultados   -> startActivity(Intent(this, ResultadosActivity::class.java))
             R.id.nav_basededatos  -> startActivity(Intent(this, BaseDeDatosActivity::class.java))
+            R.id.nav_descargar_manual -> mostrarManualPDF()
         }
         binding.drawerLayout.closeDrawers()
         return true
@@ -459,6 +462,36 @@ class MamitasAppActivity: AppCompatActivity(),
         val minTemp = normalizeMin(minTempRaw)
 
         return Pair(maxTemp, minTemp)
+    }
+    private fun mostrarManualPDF() {
+        // 1. Copiar el PDF de res/raw a cache
+        val input = resources.openRawResource(R.raw.manual)
+        val outFile = File(cacheDir, "manual.pdf")
+        FileOutputStream(outFile).use { it.write(input.readBytes()) }
+
+        // 2. Obtener URI protegido
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${packageName}.fileprovider",
+            outFile
+        )
+
+        // 3. Construir Intent de visualización mediante chooser
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val chooser = Intent.createChooser(viewIntent, "Abrir Manual PDF")
+
+        // 4. Lanzar con manejo de excepción
+        try {
+            startActivity(chooser)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this,
+                "No se encontró ninguna app para abrir PDF. Instala un lector de PDF.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
     // Función para llamar al script Python que procesa la imagen.
     private fun processImage(uri: Uri) {
